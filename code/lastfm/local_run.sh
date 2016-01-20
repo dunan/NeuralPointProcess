@@ -4,13 +4,13 @@ DATA_ROOT=$HOME/scratch/data/dataset/NeuralPointProcess/lastfm
 GRAPHNN=$HOME/Workspace/cpp/graphnn
 RESULT_ROOT=$HOME/scratch/results/MolecularSpace/NeuralPointProcess/lastfm
 
-n_hidden=256
+n_hidden=1
 n_embed=128
-bsize=16
+bsize=8
 learning_rate=0.001
 bptt=3
 max_iter=4000
-mode=CPU
+mode=GPU
 
 save_dir=$RESULT_ROOT/saved-hidden-$n_hidden-embed-$n_embed-bptt-$bptt
 

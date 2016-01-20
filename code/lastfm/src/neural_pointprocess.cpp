@@ -58,9 +58,9 @@ void Work()
         {
             std::cerr << "testing" << std::endl;
             auto& last_hidden_test = g_last_hidden_test->node_states->DenseDerived();
-            last_hidden_test.Zeros(test_data->batch_size, cfg::n_hidden);
+            last_hidden_test.Zeros(test_data->batch_size, cfg::n_hidden);            
             test_data->StartNewEpoch();
-            
+
             int t = 0;
             while (test_data->NextBatch(g_last_hidden_test, 
                                         g_event_input[0], 
@@ -68,9 +68,9 @@ void Work()
                                         g_event_label[0], 
                                         g_time_label[0]))
             {
-                t++;
+                t += g_last_hidden_test->node_states->rows;
             }
-            std::cerr << t << std::endl;
+            std::cerr << t << " " << test_data->num_samples <<  std::endl;
         }    
         
         if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)

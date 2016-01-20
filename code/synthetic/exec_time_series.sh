@@ -1,12 +1,11 @@
 #!/bin/bash
 
-DATA_ROOT=$HOME/scratch/data/dataset/NeuralPointProcess
-GRAPHNN=$HOME/Workspace/cpp/graphnn
+DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/loglogistic
 RESULT_ROOT=$HOME/scratch/results/MolecularSpace/NeuralPointProcess
 
 H=128
 bsize=128
-learning_rate=0.001
+learning_rate=0.01
 max_iter=4000
 save_dir=$RESULT_ROOT/saved-hidden-$H-bsize-$bsize
 
@@ -17,4 +16,4 @@ fi
 
 dev_id=0
 
-$GRAPHNN/build/app/time_series $DATA_ROOT/time.txt -lr $learning_rate -device $dev_id -maxe $max_iter -svdir $save_dir -h $H -b $bsize -int_report 100 -int_test 500 2>&1 | tee $save_dir/log.txt
+build/time_series $DATA_ROOT/time.txt -lr $learning_rate -device $dev_id -maxe $max_iter -svdir $save_dir -h $H -b $bsize -int_report 100 -int_test 500 2>&1 | tee $save_dir/log.txt

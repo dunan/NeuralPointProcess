@@ -10,6 +10,8 @@
 #include <set>
 #include "sparse_matrix.h"
 #include "dense_matrix.h"
+#include "mkl_helper.h"
+#include "cuda_helper.h"
 
 class IDataLoader
 {
@@ -53,8 +55,19 @@ public:
     }
     
     size_t num_samples, num_events, batch_size; 
-    
+
+private:
+    void ReloadSlot(unsigned batch_idx)    
+    {
+        index_pool.push_back(cursors[batch_idx].first); 
+        cursors[batch_idx].first = index_pool.front();
+        cursors[batch_idx].second = 0;
+        index_pool.pop_front();
+    }
+
 protected:
+
+
     template<typename data_type>
     inline void InsertSequence(data_type* seq, std::vector< std::vector<data_type> >& sequences, int seq_len)
     {
@@ -64,18 +77,31 @@ protected:
             cur_seq.push_back(seq[i]);
         sequences.push_back(cur_seq);
     }   
-    
-    template<MatMode mode>
-    void ReloadSlot(GraphData<mode, Dtype>* g_last_hidden, unsigned batch_idx)
+
+    Dtype GetAsumRow(DenseMat<CPU, Dtype>& mat, unsigned row_idx)
     {
-        DenseMat<mode, Dtype> row_submat;
-        g_last_hidden->node_states->DenseDerived().GetRows(batch_idx, 1, row_submat);
-        row_submat.Fill(0);
+        return MKLHelper_Asum(mat.cols, mat.data + row_idx * mat.cols);
+    }
+
+    Dtype GetAsumRow(DenseMat<GPU, Dtype>& mat, unsigned row_idx)
+    {
+        return CudaHelper_Asum(GPUHandle::cublashandle, mat.cols, mat.data + row_idx * mat.cols);
+    }
         
-        index_pool.push_back(cursors[batch_idx].first); 
-        cursors[batch_idx].first = index_pool.front();
-        cursors[batch_idx].second = 0;
-        index_pool.pop_front();
+    void ReloadSlot(GraphData<CPU, Dtype>* g_last_hidden, unsigned batch_idx)
+    {
+        auto& last_hidden = g_last_hidden->node_states->DenseDerived();
+        memset(last_hidden.data + last_hidden.cols * batch_idx, 0, sizeof(Dtype) * last_hidden.cols);
+
+        ReloadSlot(batch_idx);
+    }    
+
+    void ReloadSlot(GraphData<GPU, Dtype>* g_last_hidden, unsigned batch_idx)
+    {
+        auto& last_hidden = g_last_hidden->node_states->DenseDerived();
+        cudaMemset(last_hidden.data + last_hidden.cols * batch_idx, 0, sizeof(Dtype) * last_hidden.cols); 
+
+        ReloadSlot(batch_idx);
     }
     
     template<MatMode mode>
@@ -177,7 +203,6 @@ public:
     }
 }; 
 
-// assert batch size = 1 right now
 template<>
 class DataLoader<TEST> : public IDataLoader
 {
@@ -197,47 +222,89 @@ public:
     {
         if (!this->initialized)
             this->StartNewEpoch();
-            
-        if (cursors[0].second + 1 >= event_sequences[cursors[0].first].size())
-        {                                                          
-            if (available[index_pool.front()])      
-            {   
-                available[index_pool.front()] = false;   
-                this->ReloadSlot(g_last_hidden, 0);                
+        
+        unsigned delta_size = 0;                    
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+        {
+            // need to load a new sequences                                   
+            if (cursors[i].second + 1 >= event_sequences[cursors[i].first].size())
+            {
+                if (available[index_pool.front()])      
+                {   
+                    available[index_pool.front()] = false;   
+                    this->ReloadSlot(g_last_hidden, i);
+                } else 
+                    delta_size++;
             }
-            else
-                return false;                                                                             
         }
-        this->LoadEvent(g_event_input, g_event_label, 1, 0);
-        this->LoadTime(g_time_input, g_time_label, 1, 0);   
-        cursors[0].second++;                  
+
+        if (cur_batch_size == delta_size)
+            return false;
+        
+        if (delta_size)
+        {
+            auto& prev_hidden = g_last_hidden->node_states->DenseDerived();    
+            if (cur_batch_size == batch_size) // insufficient for the first time
+            {
+                std::vector<unsigned> ordered; 
+                for (unsigned i = 0; i < batch_size; ++i)
+                    ordered.push_back(i);
+
+                for (unsigned i = 0; i < batch_size - 1; ++i)
+                    for (unsigned j = i + 1; j < batch_size; ++j)
+                    {
+                        if (cursors[j].second + 1 >= event_sequences[cursors[j].first].size())
+                            continue;  // no need to move forward 
+
+                        // if x is full, or y is longer than x
+                        if (cursors[i].second + 1 >= event_sequences[cursors[i].first].size() || 
+                            event_sequences[cursors[j].first].size() - cursors[j].second > 
+                            event_sequences[cursors[i].first].size() - cursors[i].second )
+                        {
+                            unsigned tmp = ordered[i];
+                            ordered[i] = ordered[j];
+                            ordered[j] = tmp;
+                            auto t = cursors[i];
+                            cursors[i] = cursors[j];
+                            cursors[j] = t;
+                        }
+                    }
+                DenseMat<mode, Dtype> buf(batch_size - delta_size, prev_hidden.cols);
+
+                for (unsigned i = 0; i < buf.rows; ++i)
+                {
+                    cudaMemcpy(buf.data + i * buf.cols, prev_hidden.data + ordered[i] * buf.cols, sizeof(Dtype) * buf.cols, mode == CPU ? cudaMemcpyHostToHost : cudaMemcpyDeviceToDevice); 
+                }  
+                prev_hidden.CopyFrom(buf);     
+            } else
+                prev_hidden.Resize(cur_batch_size - delta_size, prev_hidden.cols);
+            cur_batch_size -= delta_size;
+        }
+        this->LoadEvent(g_event_input, g_event_label, cur_batch_size, 0);
+        this->LoadTime(g_time_input, g_time_label, cur_batch_size, 0);
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+            cursors[i].second++;         
         return true;
     }
 
     virtual void StartNewEpoch() override
-    {
-        if (!this->initialized)
-        {
-            this->initialized = true;
-            available.resize(event_sequences.size());                        
-        }
+    {        
+        IDataLoader::StartNewEpoch();
+        if (available.size() != event_sequences.size())
+            available.resize(event_sequences.size());
         
-        index_pool.clear();
-        for (unsigned i = 0; i < event_sequences.size(); ++i)
-        {
-            index_pool.push_back(i);
+        for (unsigned i = 0; i < available.size(); ++i)
             available[i] = true;
-        }
                
-        cursors[0].first = index_pool.front();
-        cursors[0].second = 0;
-        index_pool.pop_front();
-        available[cursors[0].first] = false;                               
+        for (unsigned i = 0; i < this->batch_size; ++i)
+            available[cursors[i].first] = false;
+
+        cur_batch_size = batch_size;
     }
     
 protected:    
-    
-    std::vector<bool> available;     
+    unsigned cur_batch_size;
+    std::vector<bool> available;             
 }; 
 
 DataLoader<TRAIN>* train_data;
@@ -283,7 +350,7 @@ inline void ReadRawData()
     }
     std::cerr << "totally " << label_set.size() << " events" << std::endl;
     train_data = new DataLoader<TRAIN>(label_set.size(), cfg::batch_size); 
-    test_data = new DataLoader<TEST>(label_set.size(), 1);
+    test_data = new DataLoader<TEST>(label_set.size(), cfg::batch_size);
     
     for (unsigned i = 0; i < raw_event_data.size(); ++i)
     {
@@ -297,7 +364,8 @@ inline void ReadRawData()
         for (int j = origin_len - 1; j >= 1; --j)
             raw_time_data[i][j] = raw_time_data[i][j] - raw_time_data[i][j-1];            
         train_data->InsertSequence(raw_event_data[i].data(), raw_time_data[i].data(), train_len);
-        test_data->InsertSequence(raw_event_data[i].data() + train_len, raw_time_data[i].data() + train_len, test_len);                             
+        test_len++;
+        test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, raw_time_data[i].data() + train_len - 1, test_len);                             
     }
     std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
 }
