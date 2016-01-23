@@ -1,11 +1,12 @@
 #!/bin/bash
 
-DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/loglogistic
-RESULT_ROOT=$HOME/scratch/results/MolecularSpace/NeuralPointProcess
+DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/exp_16
+RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 H=128
-bsize=128
-learning_rate=0.01
+bsize=64
+bptt=17
+learning_rate=0.0001
 max_iter=4000
 save_dir=$RESULT_ROOT/saved-hidden-$H-bsize-$bsize
 
@@ -16,4 +17,4 @@ fi
 
 dev_id=0
 
-./build/synthetic -event $DATA_ROOT/event.txt -time $DATA_ROOT/time.txt -lr $learning_rate -device $dev_id -maxe $max_iter -svdir $save_dir -hidden $H -b $bsize -int_report 100 -int_test 500 -bptt 3 2>&1 | tee $save_dir/log.txt
+./build/synthetic -event $DATA_ROOT/event.txt -time $DATA_ROOT/time.txt -lr $learning_rate -device $dev_id -maxe $max_iter -svdir $save_dir -hidden $H -b $bsize -int_report 100 -int_test 500 -bptt $bptt 2>&1 | tee $save_dir/log.txt

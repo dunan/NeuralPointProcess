@@ -78,16 +78,6 @@ protected:
         sequences.push_back(cur_seq);
     }   
 
-    Dtype GetAsumRow(DenseMat<CPU, Dtype>& mat, unsigned row_idx)
-    {
-        return MKLHelper_Asum(mat.cols, mat.data + row_idx * mat.cols);
-    }
-
-    Dtype GetAsumRow(DenseMat<GPU, Dtype>& mat, unsigned row_idx)
-    {
-        return CudaHelper_Asum(GPUHandle::cublashandle, mat.cols, mat.data + row_idx * mat.cols);
-    }
-        
     void ReloadSlot(GraphData<CPU, Dtype>* g_last_hidden, unsigned batch_idx)
     {
         auto& last_hidden = g_last_hidden->node_states->DenseDerived();
@@ -189,13 +179,13 @@ public:
     {
         if (!initialized)
             this->StartNewEpoch();
-                        
+
         for (unsigned i = 0; i < this->batch_size; ++i)
         {
             // need to load a new sequences                                   
             if (cursors[i].second + bptt >= event_sequences[cursors[i].first].size())
             {                              
-                this->ReloadSlot(g_last_hidden, i);                                                            
+                this->ReloadSlot(g_last_hidden, i); 
             }
         }
         g_last_hidden->graph->Resize(1, this->batch_size);

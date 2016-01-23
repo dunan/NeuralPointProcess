@@ -27,8 +27,9 @@ const char *datafile, *save_dir = "./saved";
 GraphNN<mode, Dtype> net_train, net_test;
 GraphData<mode, Dtype>* g_last_hidden_train, *g_last_hidden_test;
 std::vector< GraphData<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;
+LinearParam<mode, Dtype>* i2h, *h2h, *h2o;
 
-ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILayer<mode, Dtype> *last_hidden_layer, LinearParam<mode, Dtype>* i2h, LinearParam<mode, Dtype>* h2h, LinearParam<mode, Dtype>* h2o)
+ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILayer<mode, Dtype> *last_hidden_layer)
 {    
     gnn.AddLayer(last_hidden_layer);
     
@@ -81,9 +82,9 @@ void InitNetTrain()
         g_time_label.push_back(new GraphData<mode, Dtype>(DENSE));        
     }
         
-    auto* i2h = new LinearParam<mode, Dtype>("i2h", 1, cfg::n_hidden, 0, 0.01);
-    auto* h2h = new LinearParam<mode, Dtype>("h2h", cfg::n_hidden, cfg::n_hidden, 0, 0.01);
-    auto* h2o = new LinearParam<mode, Dtype>("h2o", cfg::n_hidden, 1, 0, 0.01);
+    i2h = new LinearParam<mode, Dtype>("i2h", 1, cfg::n_hidden, 0, 0.01);
+    h2h = new LinearParam<mode, Dtype>("h2h", cfg::n_hidden, cfg::n_hidden, 0, 0.01);
+    h2o = new LinearParam<mode, Dtype>("h2o", cfg::n_hidden, 1, 0, 0.01);
     
     net_train.AddParam(i2h);
     net_train.AddParam(h2h);
@@ -92,7 +93,7 @@ void InitNetTrain()
     ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden_train");    
     for (unsigned i = 0; i < cfg::bptt; ++i)
     {
-        auto* new_hidden = AddNetBlocks(i, net_train, last_hidden_layer, i2h, h2h, h2o);
+        auto* new_hidden = AddNetBlocks(i, net_train, last_hidden_layer);
         last_hidden_layer = new_hidden;
     }
         
@@ -100,7 +101,7 @@ void InitNetTrain()
     net_test.AddParam(h2h);
     net_test.AddParam(h2o);        
     auto* test_last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden_test");
-    AddNetBlocks(0, net_test, test_last_hidden_layer, i2h, h2h, h2o);            
+    AddNetBlocks(0, net_test, test_last_hidden_layer);            
 }
 
 template<typename data_type> 
@@ -213,11 +214,13 @@ int main(const int argc, const char** argv)
                                   g_time_input, 
                                   g_event_label, 
                                   g_time_label);
-        
         net_train.ForwardData(train_feat, TRAIN);        
         auto loss_map = net_train.ForwardLabel(train_label);
         //net_train.GetDenseNodeState(fmt::sprintf("reluact_%d", cfg::bptt - 1), last_hidden_train);
-        
+
+        net_train.BackPropagation();
+        net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);    
+
         if (cfg::iter % cfg::report_interval == 0)
 		{
             mae = rmse = 0.0;
@@ -229,10 +232,9 @@ int main(const int argc, const char** argv)
             rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 			mae /= cfg::bptt * cfg::batch_size;
 			std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse) << std::endl;
-		}
-        
-        net_train.BackPropagation();
-		net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);	
+/*            std::cerr << fmt::sprintf("d_i2h=%.6f\td_h2h: %.6f\td_h2o: %.6f", 
+                                        i2h->delta_weight.Amax(), h2h->delta_weight.Amax(), h2o->delta_weight.Amax()) << std::endl;*/ 
+		}        	
 	}
     
 	GPUHandle::Destroy();
