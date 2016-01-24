@@ -1,11 +1,11 @@
 #!/bin/bash
 
-DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/exp_16
+DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/rayleigh
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 H=128
-bsize=64
-bptt=17
+bsize=256
+bptt=8
 learning_rate=0.0001
 max_iter=4000
 save_dir=$RESULT_ROOT/saved-hidden-$H-bsize-$bsize

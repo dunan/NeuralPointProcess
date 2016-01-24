@@ -208,6 +208,12 @@ int main(const int argc, const char** argv)
 			std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse) << std::endl;            
 		}
         
+        if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
+        {
+            std::cerr << fmt::sprintf("saving model for iter = %d", cfg::iter) << std::endl;
+            net_train.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
+        }
+        
         train_data->NextBpttBatch(cfg::bptt, 
                                   g_last_hidden_train, 
                                   g_event_input, 
@@ -216,7 +222,7 @@ int main(const int argc, const char** argv)
                                   g_time_label);
         net_train.ForwardData(train_feat, TRAIN);        
         auto loss_map = net_train.ForwardLabel(train_label);
-        //net_train.GetDenseNodeState(fmt::sprintf("reluact_%d", cfg::bptt - 1), last_hidden_train);
+        net_train.GetDenseNodeState(fmt::sprintf("reluact_%d", cfg::bptt - 1), last_hidden_train);
 
         net_train.BackPropagation();
         net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);    
