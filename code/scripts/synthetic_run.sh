@@ -5,7 +5,7 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 H=128
 bsize=256
-bptt=5
+bptt=8
 learning_rate=0.0001
 max_iter=4000
 cur_iter=0

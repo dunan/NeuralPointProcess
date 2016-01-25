@@ -50,13 +50,16 @@ inline void ReadRawData()
         int origin_len = raw_event_data[i].size();
         int test_len = origin_len * 0.1;
         int train_len = origin_len - test_len;
+        train_len = 5;
         for (int j = 0; j < origin_len; ++j)
             raw_event_data[i][j]--; // the raw event is 1-based
         for (int j = origin_len - 1; j >= 1; --j)
             raw_time_data[i][j] = raw_time_data[i][j] - raw_time_data[i][j-1];     
         train_data->InsertSequence(raw_event_data[i].data(), raw_time_data[i].data(), train_len);
         test_len++;
-        test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, raw_time_data[i].data() + train_len - 1, test_len);                             
+        //test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, raw_time_data[i].data() + train_len - 1, test_len); 
+        test_data->InsertSequence(raw_event_data[i].data(), raw_time_data[i].data(), train_len);
+        break;
     }
     std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
 }

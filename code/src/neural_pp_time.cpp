@@ -163,7 +163,7 @@ void Work()
         
         net_train.ForwardData(train_feat, TRAIN);
         auto loss_map = net_train.ForwardLabel(train_label);
-        //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+        net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
 
         if (cfg::iter % cfg::report_interval == 0)
         {
