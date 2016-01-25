@@ -20,7 +20,7 @@
 #include "config.h"
 #include "data_loader.h"
 
-const MatMode mode = GPU;
+const MatMode mode = CPU;
 
 const char *datafile, *save_dir = "./saved";
 
@@ -222,7 +222,7 @@ int main(const int argc, const char** argv)
                                   g_time_label);
         net_train.ForwardData(train_feat, TRAIN);        
         auto loss_map = net_train.ForwardLabel(train_label);
-        net_train.GetDenseNodeState(fmt::sprintf("reluact_%d", cfg::bptt - 1), last_hidden_train);
+        //net_train.GetDenseNodeState(fmt::sprintf("reluact_%d", cfg::bptt - 1), last_hidden_train);
 
         net_train.BackPropagation();
         net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);    
