@@ -8,7 +8,7 @@
 #include "dense_matrix.h"
 #include "linear_param.h"
 #include "graphnn.h"
-#include "node_layer.h"
+#include "multi_param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
@@ -33,10 +33,10 @@ ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILay
     hidden_layer->AddParam(time_input_layer->name, param_dict["w_time2h"]);
     hidden_layer->AddParam(last_hidden_layer->name, param_dict["w_h2h"]);
 
-    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), WriteType::INPLACE, ActTarget::NODE);
+    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
 
     auto* time_out_layer = new SimpleNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"]); 
-    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), WriteType::INPLACE, ActTarget::NODE);
+    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
     
     auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step));
     auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step), PropErr::N);

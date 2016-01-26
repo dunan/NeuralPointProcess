@@ -8,7 +8,7 @@
 #include "dense_matrix.h"
 #include "linear_param.h"
 #include "graphnn.h"
-#include "node_layer.h"
+#include "multi_param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
@@ -32,18 +32,18 @@ ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILay
 
     auto* embed_layer = new SimpleNodeLayer<mode, Dtype>(fmt::sprintf("embed_%d", time_step), param_dict["w_embed"]); 
 
-    auto* relu_embed_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_embed_%d", time_step), WriteType::INPLACE, ActTarget::NODE);
+    auto* relu_embed_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_embed_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
 
     auto* hidden_layer = new NodeLayer<mode, Dtype>(fmt::sprintf("hidden_%d", time_step));
     hidden_layer->AddParam(time_input_layer->name, param_dict["w_time2h"]); 
     hidden_layer->AddParam(relu_embed_layer->name, param_dict["w_event2h"]); 
     hidden_layer->AddParam(last_hidden_layer->name, param_dict["w_h2h"]); 
 
-    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), WriteType::INPLACE, ActTarget::NODE);
+    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
     auto* event_output_layer = new SimpleNodeLayer<mode, Dtype>(fmt::sprintf("event_out_%d", time_step), param_dict["w_event_out"]); 
 
     auto* time_out_layer = new SimpleNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"]); 
-    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), WriteType::INPLACE, ActTarget::NODE);
+    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
 
     auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
     auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step));
