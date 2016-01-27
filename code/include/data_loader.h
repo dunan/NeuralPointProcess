@@ -304,6 +304,26 @@ protected:
     std::vector<bool> available;             
 }; 
 
+template<MatMode mode>
+inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input, 
+                   std::vector< GraphData<mode, Dtype>* >& g_event_label, 
+                   std::vector< GraphData<mode, Dtype>* >& g_time_input, 
+                   std::vector< GraphData<mode, Dtype>* >& g_time_label)
+{
+    g_event_input.clear();
+    g_event_label.clear();
+    g_time_input.clear();
+    g_time_label.clear();
+            
+    for (unsigned i = 0; i < cfg::bptt; ++i)
+    {
+        g_event_input.push_back(new GraphData<mode, Dtype>(SPARSE));
+        g_event_label.push_back(new GraphData<mode, Dtype>(SPARSE));
+        g_time_input.push_back(new GraphData<mode, Dtype>(DENSE));
+        g_time_label.push_back(new GraphData<mode, Dtype>(DENSE));        
+    }
+}
+
 DataLoader<TRAIN>* train_data;
 DataLoader<TEST>* test_data;
 

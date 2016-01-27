@@ -33,6 +33,7 @@ struct cfg
 		        else if (strcmp(argv[i + 1], "GPU") == 0)
 		            device_type = GPU;
 		        else throw "unknown device"; 
+                std::cerr << "device_type = " << argv[i + 1] << std::endl;
 		    }
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                

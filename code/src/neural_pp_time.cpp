@@ -8,7 +8,7 @@
 #include "dense_matrix.h"
 #include "linear_param.h"
 #include "graphnn.h"
-#include "multi_param_layer.h"
+#include "param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
@@ -16,7 +16,6 @@
 #include "mse_criterion_layer.h"
 #include "abs_criterion_layer.h"
 #include "classnll_criterion_layer.h"
-#include "simple_node_layer.h"
 
 #include "config.h"
 #include "data_loader.h"
@@ -27,15 +26,15 @@ ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILay
                                     std::map< std::string, LinearParam<mode, Dtype>* >& param_dict)
 {
     gnn.AddLayer(last_hidden_layer);
-    auto* time_input_layer = new InputLayer<mode, Dtype>(fmt::sprintf("time_input_%d", time_step));
+    auto* time_input_layer = new InputLayer<mode, Dtype>(fmt::sprintf("time_input_%d", time_step), GraphAtt::NODE);
 
     auto* hidden_layer = new NodeLayer<mode, Dtype>(fmt::sprintf("hidden_%d", time_step));
-    hidden_layer->AddParam(time_input_layer->name, param_dict["w_time2h"]);
-    hidden_layer->AddParam(last_hidden_layer->name, param_dict["w_h2h"]);
+    hidden_layer->AddParam(time_input_layer->name, param_dict["w_time2h"], GraphAtt::NODE);
+    hidden_layer->AddParam(last_hidden_layer->name, param_dict["w_h2h"], GraphAtt::NODE);
 
-    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
+    auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
 
-    auto* time_out_layer = new SimpleNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"]); 
+    auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
     //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), WriteType::INPLACE, GraphAtt::NODE);
     
     auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step));
@@ -69,7 +68,7 @@ ILayer<mode, Dtype>* AddNetBlocks(int time_step, GraphNN<mode, Dtype>& gnn, ILay
 template<MatMode mode>
 void InitNet(GraphNN<mode, Dtype>& gnn, std::map< std::string, LinearParam<mode, Dtype>* >& param_dict, unsigned n_unfold)
 {
-    ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden");    
+    ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden", GraphAtt::NODE);    
 
     for (unsigned i = 0; i < n_unfold; ++i)
     {
