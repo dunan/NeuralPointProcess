@@ -1,10 +1,14 @@
 include $(HOME)/Workspace/cpp/graphnn/core_makefile
 
-all: build/synthetic_time
+all: build/synthetic build/neural_pp_time
 
 CXXFLAGS += -I./include
 
-build/synthetic_time: src/synthetic_time.cpp include/* $(gnn_objs) $(gnn_include)
+build/neural_pp_time: src/neural_pp_time.cpp include/* $(gnn_objs) $(gnn_include)
+	$(dir_guard)
+	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.o %.cuo, $^) $(LDFLAGS)
+
+build/synthetic: src/synthetic.cpp include/* $(gnn_objs) $(gnn_include)
 	$(dir_guard)
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %.cpp %.o %.cuo, $^) $(LDFLAGS)
 

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 DATA_ROOT=$HOME/scratch/data/dataset/NeuralPointProcess/lastfm
-RESULT_ROOT=$HOME/scratch/results/MolecularSpace/NeuralPointProcess/lastfm
+RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess/lastfm
 
-n_hidden=16
+n_hidden=128
 bsize=1
-learning_rate=0.0001
+learning_rate=0.001
 bptt=5
-max_iter=40000
-mode=GPU
+max_iter=40000000
+mode=CPU
 
 save_dir=$RESULT_ROOT/saved-hidden-$n_hidden-embed-$n_embed-bptt-$bptt
 

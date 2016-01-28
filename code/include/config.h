@@ -3,6 +3,13 @@
 
 typedef double Dtype;
 
+enum class NetType
+{
+    TIME = 0,
+    EVENT = 1,
+    JOINT = 2
+};
+
 struct cfg
 {
     static int dev_id, iter; 
@@ -14,10 +21,12 @@ struct cfg
     static unsigned test_interval; 
     static unsigned report_interval; 
     static unsigned save_interval; 
+    static NetType net_type;
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
     static MatMode device_type;
+    static Dtype w_scale;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -35,6 +44,17 @@ struct cfg
 		        else throw "unknown device"; 
                 std::cerr << "device_type = " << argv[i + 1] << std::endl;
 		    }
+            if (strcmp(argv[i], "-net") == 0)
+            {
+                if (strcmp(argv[i + 1], "time") == 0)
+                    net_type = NetType::TIME;
+                else if (strcmp(argv[i + 1], "event") == 0)
+                    net_type = NetType::EVENT;
+                else if (strcmp(argv[i + 1], "joint") == 0)
+                    net_type = NetType::JOINT;
+                else throw "unknown net type"; 
+                std::cerr << "net_type = " << argv[i + 1] << std::endl;
+            }
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -59,6 +79,8 @@ struct cfg
     			save_interval = atoi(argv[i + 1]);
     		if (strcmp(argv[i], "-l2") == 0)
     			l2_penalty = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-w_scale") == 0)
+                w_scale = atof(argv[i + 1]);
     		if (strcmp(argv[i], "-m") == 0)
     			momentum = atof(argv[i + 1]);	
     		if (strcmp(argv[i], "-svdir") == 0)
@@ -76,6 +98,7 @@ struct cfg
     	std::cerr << "report_interval = " << report_interval << std::endl;
     	std::cerr << "save_interval = " << save_interval << std::endl;
     	std::cerr << "lr = " << lr << std::endl;
+        std::cerr << "w_scale = " << w_scale << std::endl;
     	std::cerr << "l2_penalty = " << l2_penalty << std::endl;
     	std::cerr << "momentum = " << momentum << std::endl;
     	std::cerr << "init iter = " << iter << std::endl;	
@@ -98,10 +121,11 @@ unsigned cfg::save_interval = 50000;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
+Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";
-
+NetType cfg::net_type = NetType::TIME;
 
 #endif

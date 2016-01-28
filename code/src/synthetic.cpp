@@ -20,11 +20,27 @@
 #include "data_loader.h"
 #include "synthetic_data_loader.h"
 #include "time_net.h"
+#include "joint_net.h"
 
 template<MatMode mode>
 void Work()
 {
-    TimeNet<mode, Dtype>* net = new TimeNet<mode, Dtype>();
+    INet<mode, Dtype>* net; 
+
+    switch (cfg::net_type)
+    {
+        case NetType::TIME:
+            net = new TimeNet<mode, Dtype>();
+            break;
+        case NetType::JOINT:
+            net = new JointNet<mode, Dtype>();
+            break;
+        default:
+            std::cerr << "unsupported nettype" << std::endl;
+            return;
+            break;
+    }
+
     net->Setup();
     net->MainLoop();
 }
@@ -34,7 +50,7 @@ int main(const int argc, const char** argv)
     cfg::LoadParams(argc, argv);    
 	GPUHandle::Init(cfg::dev_id);
     
-    ReadRaw();
+    LoadSyntheticData();
 
     if (cfg::device_type == CPU)
         Work<CPU>();

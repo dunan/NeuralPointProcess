@@ -1,28 +1,19 @@
 #ifndef SYNTHETIC_H
 #define SYNTHETIC_H
 
-template<typename data_type> 
-void ReadDataSeq(const char* datafile, std::vector<data_type>& raw_data)
-{
-    raw_data.clear();
-    std::ifstream raw_stream(datafile);
-    data_type buf;
-    while (raw_stream >> buf)
-    {
-        raw_data.push_back(buf);
-    }
-}
+#include "data_loader.h"
 
-void ReadRaw()
-{
-    std::vector<Dtype> time_data;
-    std::vector<int> event_data;
 
-    ReadDataSeq(cfg::f_time_data, time_data);
-    ReadDataSeq(cfg::f_event_data, event_data);
+void LoadSyntheticData()
+{
+    std::vector< std::vector<int> > raw_event_data;
+    std::vector< std::vector<Dtype> > raw_time_data;
+
+    LoadRawTimeEventData(raw_event_data, raw_time_data);
     
-    for (unsigned i = 0; i < event_data.size(); ++i)
-        event_data[i]--;
+    // our simulation data only contains one line
+    auto& time_data = raw_time_data[0];
+    auto& event_data = raw_event_data[0];    
 
     int data_len = time_data.size() - time_data.size() % (cfg::batch_size * cfg::bptt);    
     int seg_len = data_len / cfg::batch_size;
@@ -34,9 +25,6 @@ void ReadRaw()
     for (int i = time_data.size() - 1; i >= 1; --i)
         time_data[i] = time_data[i] - time_data[i - 1];
         
-    train_data = new DataLoader<TRAIN>(1, cfg::batch_size); 
-    test_data = new DataLoader<TEST>(1, cfg::batch_size);
-
     Dtype* time_data_ptr = time_data.data();
     int* event_data_ptr = event_data.data();
     for (unsigned i = 0; i < cfg::batch_size; ++i)
