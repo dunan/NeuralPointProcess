@@ -14,6 +14,7 @@
 #include "classnll_criterion_layer.h"
 #include "config.h"
 #include "data_loader.h"
+#include "err_cnt_criterion_layer.h"
 
 template<MatMode mode, typename Dtype>
 class INet
@@ -68,6 +69,7 @@ public:
             	test_data->StartNewEpoch();
             	
             	test_loss_map.clear();
+                FILE* fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
             	while (test_data->NextBatch(g_last_hidden_test, 
                 	                        g_event_input[0], 
                     	                    g_time_input[0], 
@@ -83,8 +85,11 @@ public:
                 			test_loss_map[it->first] = 0.0;
                 		test_loss_map[it->first] += it->second;
                 	}
-                    net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);
+                    WriteTestBatch(fid);
+                    if (cfg::bptt > 1)
+                        net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);
             	}
+                fclose(fid);
             	PrintTestResults(test_loss_map);
         	}
         
@@ -103,7 +108,10 @@ public:
         
         	net_train.ForwardData(train_feat, TRAIN);
         	auto loss_map = net_train.ForwardLabel(train_label);
-            //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+            if (cfg::bptt > 1)
+            {
+                net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+            }
 
             net_train.BackPropagation();
             net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);   
@@ -114,6 +122,7 @@ public:
         	}
     	}
 	}
+
 
 	std::map< std::string, LinearParam<mode, Dtype>* > param_dict;
 	GraphNN<mode, Dtype> net_train, net_test;
@@ -128,7 +137,9 @@ public:
         ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden", GraphAtt::NODE);
 
         for (auto it = param_dict.begin(); it != param_dict.end(); ++it)
+        {
             gnn.AddParam(it->second);
+        }
 
         for (unsigned i = 0; i < n_unfold; ++i)
         {
@@ -138,6 +149,8 @@ public:
     }    
 
     GraphData<mode, Dtype>* g_last_hidden_train, *g_last_hidden_test;
+
+    virtual void WriteTestBatch(FILE* fid) = 0;
 	virtual void LinkTrainData() = 0;
 	virtual void LinkTestData() = 0;
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) = 0;

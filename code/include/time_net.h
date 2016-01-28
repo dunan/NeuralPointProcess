@@ -98,6 +98,11 @@ public:
     	return relu_hidden_layer; 
 	}
 
+	virtual void WriteTestBatch(FILE* fid) override
+	{
+		
+	}
+
 };
 
 #endif

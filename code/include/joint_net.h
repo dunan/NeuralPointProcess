@@ -20,6 +20,7 @@ public:
         	this->train_feat[fmt::sprintf("time_input_%d", i)] = this->g_time_input[i];
         	this->train_label[fmt::sprintf("mse_%d", i)] = this->g_time_label[i];
         	this->train_label[fmt::sprintf("mae_%d", i)] = this->g_time_label[i];
+            this->train_label[fmt::sprintf("err_cnt_%d", i)] = this->g_event_label[i];
     	}
 	}
 
@@ -31,21 +32,24 @@ public:
 		this->test_label["mse_0"] = this->g_time_label[0];
 		this->test_label["mae_0"] = this->g_time_label[0];
 		this->test_label["nll_0"] = this->g_event_label[0];
+        this->test_label["err_cnt_0"] = this->g_event_label[0];
 	}
 
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) 
 	{
-		Dtype rmse = 0.0, mae = 0.0, nll = 0.0;
+		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
             rmse += loss_map[fmt::sprintf("mse_%d", i)];
         	nll += loss_map[fmt::sprintf("nll_%d", i)]; 
+            err_cnt += loss_map[fmt::sprintf("err_cnt_%d", i)]; 
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
 		nll /= cfg::bptt * train_data->batch_size;
-        std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f", cfg::iter, mae, rmse, nll) << std::endl; 
+        err_cnt /= cfg::bptt * train_data->batch_size;
+        std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt) << std::endl; 
 	}
 
 	virtual void PrintTestResults(std::map<std::string, Dtype>& loss_map) 
@@ -54,7 +58,8 @@ public:
 		rmse = sqrt(rmse / test_data->num_samples);
 		mae /= test_data->num_samples;
 		nll /= test_data->num_samples;
-        std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f", mae, rmse, nll) << std::endl;
+        Dtype err_cnt = loss_map["err_cnt_0"] / test_data->num_samples;
+        std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", mae, rmse, nll, err_cnt) << std::endl;
 	}
 
 	virtual void InitParamDict() 
@@ -94,6 +99,7 @@ public:
     	auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
     	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step));
     	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step), PropErr::N);
+        auto* err_cnt = new ErrCntCriterionLayer<mode, Dtype>(fmt::sprintf("err_cnt_%d", time_step));
 
     	gnn.AddEdge(event_input_layer, embed_layer);
     	gnn.AddEdge(embed_layer, relu_embed_layer);
@@ -112,9 +118,15 @@ public:
     	gnn.AddEdge(exp_layer, mae_criterion);
     	
     	gnn.AddEdge(event_output_layer, classnll);
+        gnn.AddEdge(event_output_layer, err_cnt); 
 
 		return relu_hidden_layer; 
 	}
+
+    virtual void WriteTestBatch(FILE* fid) override
+    {
+        
+    }
 };
 
 #endif

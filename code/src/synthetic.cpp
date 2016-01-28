@@ -21,6 +21,7 @@
 #include "synthetic_data_loader.h"
 #include "time_net.h"
 #include "joint_net.h"
+#include "event_net.h"
 
 template<MatMode mode>
 void Work()
@@ -35,12 +36,14 @@ void Work()
         case NetType::JOINT:
             net = new JointNet<mode, Dtype>();
             break;
+        case NetType::EVENT:
+            net = new EventNet<mode, Dtype>();
+            break;
         default:
             std::cerr << "unsupported nettype" << std::endl;
             return;
             break;
     }
-
     net->Setup();
     net->MainLoop();
 }

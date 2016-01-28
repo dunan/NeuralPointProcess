@@ -1,19 +1,21 @@
 #!/bin/bash
 
-DATA_ROOT=$HOME/Research/LSTMPointProcess/data/synthetic/mixture
+task=mixture
+
+DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 n_embed=128
-H=256
-bsize=128
+H=128
+bsize=32
 bptt=3
-learning_rate=0.001
+learning_rate=0.01
 max_iter=4000
 cur_iter=0
-w_scale=0.0001
-mode=GPU
+w_scale=0.001
+mode=CPU
 net=joint
-save_dir=$RESULT_ROOT/saved-hidden-$H-bsize-$bsize
+save_dir=$RESULT_ROOT/saved-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
 then
