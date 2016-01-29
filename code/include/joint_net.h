@@ -52,13 +52,13 @@ public:
         std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt) << std::endl; 
 	}
 
-	virtual void PrintTestResults(std::map<std::string, Dtype>& loss_map) 
+	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) 
 	{
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"], nll = loss_map["nll_0"];
-		rmse = sqrt(rmse / test_data->num_samples);
-		mae /= test_data->num_samples;
-		nll /= test_data->num_samples;
-        Dtype err_cnt = loss_map["err_cnt_0"] / test_data->num_samples;
+		rmse = sqrt(rmse / dataset->num_samples);
+		mae /= dataset->num_samples;
+		nll /= dataset->num_samples;
+        Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
         std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", mae, rmse, nll, err_cnt) << std::endl;
 	}
 
@@ -125,8 +125,12 @@ public:
 
     virtual void WriteTestBatch(FILE* fid) override
     {
-        
+        this->net_test.GetDenseNodeState("expact_0", buf);
+        for (size_t i = 0; i < buf.rows; ++i)
+            fprintf(fid, "%.6f\n", buf.data[i]);
     }
+
+    DenseMat<CPU, Dtype> buf;
 };
 
 #endif

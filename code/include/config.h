@@ -28,6 +28,7 @@ struct cfg
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
+    static bool save_eval, save_test;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -56,6 +57,10 @@ struct cfg
                 else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
+            if (strcmp(argv[i], "-save_eval") == 0)
+                save_eval = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-save_test") == 0)
+                save_test = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -101,6 +106,8 @@ struct cfg
     	std::cerr << "test_interval = " << test_interval << std::endl;
     	std::cerr << "report_interval = " << report_interval << std::endl;
     	std::cerr << "save_interval = " << save_interval << std::endl;
+        std::cerr << "save_test = " << save_test << std::endl;
+        std::cerr << "save_eval = " << save_eval << std::endl;
     	std::cerr << "lr = " << lr << std::endl;
         std::cerr << "w_scale = " << w_scale << std::endl;
     	std::cerr << "l2_penalty = " << l2_penalty << std::endl;
@@ -128,6 +135,8 @@ Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
 Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
+bool cfg::save_eval = false;
+bool cfg::save_test = false;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";

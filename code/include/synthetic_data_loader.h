@@ -43,6 +43,14 @@ void LoadSyntheticData()
     Dtype* time_label_ptr = time_label.data();
 
     int* event_data_ptr = event_data.data();
+
+
+    val_data->InsertSequence(event_data_ptr,
+                             time_data_ptr,
+                             time_label_ptr + 1,
+                             101);
+
+
     for (unsigned i = 0; i < cfg::batch_size; ++i)
     {
         train_data->InsertSequence(event_data_ptr, 

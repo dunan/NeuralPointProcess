@@ -327,7 +327,7 @@ inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input,
 }
 
 DataLoader<TRAIN>* train_data;
-DataLoader<TEST>* test_data;
+DataLoader<TEST>* test_data, *val_data;
 
 template<typename data_type>
 inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data)
@@ -372,6 +372,7 @@ inline void LoadRawTimeEventData(std::vector< std::vector<int> >& raw_event_data
     std::cerr << "totally " << label_set.size() << " events" << std::endl;
     train_data = new DataLoader<TRAIN>(label_set.size(), cfg::batch_size); 
     test_data = new DataLoader<TEST>(label_set.size(), cfg::batch_size);
+    val_data = new DataLoader<TEST>(label_set.size(), 1);
 }
 
 
