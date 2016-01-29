@@ -1,9 +1,9 @@
 #!/bin/bash
 
-task=mixture
+task=${1:-mixture}
 
-DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
-RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
+input_dir="${DATA_ROOT:-$HOME/Research/NeuralPointProcess/data/synthetic}/$task"
+RESULT_ROOT=${RESULT_ROOT:-$HOME/scratch/results/NeuralPointProcess}
 
 n_embed=128
 H=128
@@ -15,7 +15,7 @@ cur_iter=0
 w_scale=0.001
 mode=CPU
 net=joint
-save_dir=$RESULT_ROOT/saved-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
+save_dir="$RESULT_ROOT/saved-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize"
 
 if [ ! -e $save_dir ];
 then
@@ -25,8 +25,8 @@ fi
 dev_id=0
 
 ./build/synthetic \
-    -event $DATA_ROOT/event.txt \
-    -time $DATA_ROOT/time.txt \
+    -event $input_dir/event.txt \
+    -time $input_dir/time.txt \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
