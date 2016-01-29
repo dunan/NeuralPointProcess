@@ -27,6 +27,7 @@ struct cfg
     static Dtype momentum; 
     static MatMode device_type;
     static Dtype w_scale;
+    static Dtype T;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -59,6 +60,8 @@ struct cfg
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
 		        lr = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-T") == 0)
+                T = atof(argv[i + 1]);
             if (strcmp(argv[i], "-bptt") == 0)
                 bptt = atoi(argv[i + 1]);                                    
             if (strcmp(argv[i], "-cur_iter") == 0)
@@ -92,6 +95,7 @@ struct cfg
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
+        std::cerr << "T = " << T << std::endl; 
         std::cerr << "batch_size = " << batch_size << std::endl;
         std::cerr << "max_epoch = " << max_epoch << std::endl;
     	std::cerr << "test_interval = " << test_interval << std::endl;
@@ -118,6 +122,7 @@ unsigned cfg::max_epoch = 200;
 unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
+Dtype cfg::T = 0;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
