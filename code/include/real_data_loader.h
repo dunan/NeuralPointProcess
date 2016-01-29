@@ -9,7 +9,7 @@ inline void LoadRealData()
     std::vector< std::vector<Dtype> > raw_time_data;
 
     LoadRawTimeEventData(raw_event_data, raw_time_data);
-    
+    assert(cfg::T == 0); // haven't implement periodical time
     for (unsigned i = 0; i < raw_event_data.size(); ++i)
     {
         assert(raw_event_data[i].size() == raw_time_data[i].size());
@@ -21,9 +21,15 @@ inline void LoadRealData()
             raw_event_data[i][j]--; // the raw event is 1-based
         for (int j = origin_len - 1; j >= 1; --j)
             raw_time_data[i][j] = raw_time_data[i][j] - raw_time_data[i][j-1];     
-        train_data->InsertSequence(raw_event_data[i].data(), raw_time_data[i].data(), train_len);
+        train_data->InsertSequence(raw_event_data[i].data(), 
+                                   raw_time_data[i].data(), 
+                                   raw_time_data[i].data() + 1, 
+                                   train_len);
         test_len++;
-        test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, raw_time_data[i].data() + train_len - 1, test_len); 
+        test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, 
+                                  raw_time_data[i].data() + train_len - 1, 
+                                  raw_time_data[i].data() + train_len,
+                                  test_len); 
     }
     std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
 }

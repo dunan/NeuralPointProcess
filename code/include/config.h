@@ -27,6 +27,8 @@ struct cfg
     static Dtype momentum; 
     static MatMode device_type;
     static Dtype w_scale;
+    static Dtype T;
+    static bool save_eval, save_test;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -55,10 +57,16 @@ struct cfg
                 else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
+            if (strcmp(argv[i], "-save_eval") == 0)
+                save_eval = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-save_test") == 0)
+                save_test = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
 		        lr = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-T") == 0)
+                T = atof(argv[i + 1]);
             if (strcmp(argv[i], "-bptt") == 0)
                 bptt = atoi(argv[i + 1]);                                    
             if (strcmp(argv[i], "-cur_iter") == 0)
@@ -92,11 +100,14 @@ struct cfg
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
+        std::cerr << "T = " << T << std::endl; 
         std::cerr << "batch_size = " << batch_size << std::endl;
         std::cerr << "max_epoch = " << max_epoch << std::endl;
     	std::cerr << "test_interval = " << test_interval << std::endl;
     	std::cerr << "report_interval = " << report_interval << std::endl;
     	std::cerr << "save_interval = " << save_interval << std::endl;
+        std::cerr << "save_test = " << save_test << std::endl;
+        std::cerr << "save_eval = " << save_eval << std::endl;
     	std::cerr << "lr = " << lr << std::endl;
         std::cerr << "w_scale = " << w_scale << std::endl;
     	std::cerr << "l2_penalty = " << l2_penalty << std::endl;
@@ -118,11 +129,14 @@ unsigned cfg::max_epoch = 200;
 unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
+Dtype cfg::T = 0;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
 Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
+bool cfg::save_eval = false;
+bool cfg::save_test = false;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";

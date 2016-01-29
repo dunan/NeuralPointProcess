@@ -37,6 +37,42 @@ public:
         initialized = true;
     }
 
+    void EvaluateDataset(DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
+    {
+        auto& last_hidden_test = g_last_hidden_test->node_states->DenseDerived();
+        last_hidden_test.Zeros(dataset->batch_size, cfg::n_hidden); 
+
+        dataset->StartNewEpoch();
+                
+        test_loss_map.clear();
+        FILE* fid; 
+        if (save_prediction)
+            fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
+
+        while (dataset->NextBatch(g_last_hidden_test, 
+                                  g_event_input[0], 
+                                  g_time_input[0], 
+                                  g_event_label[0], 
+                                  g_time_label[0]))
+        {
+            net_test.ForwardData(test_feat, TEST);
+            auto loss_map = net_test.ForwardLabel(test_label);
+
+            for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
+            {
+                if (test_loss_map.count(it->first) == 0)
+                    test_loss_map[it->first] = 0.0;
+                test_loss_map[it->first] += it->second;
+            }
+            if (save_prediction)
+                WriteTestBatch(fid);
+            if (cfg::bptt > 1)
+                net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);
+        }
+        if (save_prediction)
+            fclose(fid);
+    }
+
 	void MainLoop()
 	{
         if (!initialized)
@@ -63,34 +99,12 @@ public:
         	if (cfg::iter % cfg::test_interval == 0)
 	        {
     	        std::cerr << "testing" << std::endl;
-        	    auto& last_hidden_test = g_last_hidden_test->node_states->DenseDerived();
-            	last_hidden_test.Zeros(test_data->batch_size, cfg::n_hidden); 
+        	    
+                EvaluateDataset(test_data, false, test_loss_map);
+                PrintTestResults(test_data, test_loss_map);
 
-            	test_data->StartNewEpoch();
-            	
-            	test_loss_map.clear();
-                FILE* fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
-            	while (test_data->NextBatch(g_last_hidden_test, 
-                	                        g_event_input[0], 
-                    	                    g_time_input[0], 
-                        	                g_event_label[0], 
-                            	            g_time_label[0]))
-            	{
-                	net_test.ForwardData(test_feat, TEST);
-                	auto loss_map = net_test.ForwardLabel(test_label);
-
-                	for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
-                	{
-                		if (test_loss_map.count(it->first) == 0)
-                			test_loss_map[it->first] = 0.0;
-                		test_loss_map[it->first] += it->second;
-                	}
-                    WriteTestBatch(fid);
-                    if (cfg::bptt > 1)
-                        net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);
-            	}
-                fclose(fid);
-            	PrintTestResults(test_loss_map);
+                EvaluateDataset(val_data, cfg::save_eval, test_loss_map);
+                PrintTestResults(val_data, test_loss_map);
         	}
         
         	if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
@@ -154,7 +168,7 @@ public:
 	virtual void LinkTrainData() = 0;
 	virtual void LinkTestData() = 0;
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) = 0;
-	virtual void PrintTestResults(std::map<std::string, Dtype>& loss_map) = 0;
+	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) = 0;
 
 	virtual void InitParamDict() = 0;
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 

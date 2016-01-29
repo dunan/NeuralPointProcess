@@ -21,17 +21,19 @@ public:
     {
         event_sequences.clear();
         time_sequences.clear();
+        time_label_sequences.clear();
         cursors.resize(batch_size);
         index_pool.clear();
         num_samples = 0;
         initialized = false;
     }
     
-    inline void InsertSequence(int* event_seq, Dtype* time_seq, int seq_len)
+    inline void InsertSequence(int* event_seq, Dtype* time_seq, Dtype* time_label, int seq_len)
     {
         num_samples += seq_len - 1;
         InsertSequence(event_seq, event_sequences, seq_len);
-        InsertSequence(time_seq, time_sequences, seq_len);   
+        InsertSequence(time_seq, time_sequences, seq_len); 
+        InsertSequence(time_label, time_label_sequences, seq_len - 1); 
     }
     
     virtual void StartNewEpoch()
@@ -140,7 +142,7 @@ protected:
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
             time_feat_cpu.data[i] = time_sequences[cursors[i].first][cursors[i].second + step];
-            time_label_cpu.data[i] = time_sequences[cursors[i].first][cursors[i].second + step + 1];
+            time_label_cpu.data[i] = time_label_sequences[cursors[i].first][cursors[i].second + step];
         }
         
         feat.CopyFrom(time_feat_cpu);
@@ -150,7 +152,7 @@ protected:
     bool initialized;
     std::vector< std::pair<unsigned, unsigned> > cursors;                 
     std::vector< std::vector<int> > event_sequences;
-    std::vector< std::vector<Dtype> > time_sequences;
+    std::vector< std::vector<Dtype> > time_sequences, time_label_sequences;
     std::deque< unsigned > index_pool;
     SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;
     DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;
@@ -325,7 +327,7 @@ inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input,
 }
 
 DataLoader<TRAIN>* train_data;
-DataLoader<TEST>* test_data;
+DataLoader<TEST>* test_data, *val_data;
 
 template<typename data_type>
 inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data)
@@ -370,6 +372,7 @@ inline void LoadRawTimeEventData(std::vector< std::vector<int> >& raw_event_data
     std::cerr << "totally " << label_set.size() << " events" << std::endl;
     train_data = new DataLoader<TRAIN>(label_set.size(), cfg::batch_size); 
     test_data = new DataLoader<TEST>(label_set.size(), cfg::batch_size);
+    val_data = new DataLoader<TEST>(label_set.size(), 1);
 }
 
 

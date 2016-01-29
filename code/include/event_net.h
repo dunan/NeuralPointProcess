@@ -41,10 +41,10 @@ public:
         std::cerr << fmt::sprintf("train iter=%d\tevent nll: %.4f\tevent err_rate: %.4f", cfg::iter, nll, err_cnt) << std::endl; 
 	}
 
-	virtual void PrintTestResults(std::map<std::string, Dtype>& loss_map) override
+	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
 	{
-		Dtype nll = loss_map["nll_0"] / test_data->num_samples;
-		Dtype err_cnt = loss_map["err_cnt_0"] / test_data->num_samples;
+		Dtype nll = loss_map["nll_0"] / dataset->num_samples;
+		Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
         std::cerr << fmt::sprintf("event nll: %.4f\tevent err_rate: %.4f", nll, err_cnt) << std::endl;
 	}
 
@@ -97,7 +97,6 @@ public:
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{
-
 	}
 
 };

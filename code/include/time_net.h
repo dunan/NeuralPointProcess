@@ -41,11 +41,11 @@ public:
 		std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse) << std::endl;
 	}
 
-	virtual void PrintTestResults(std::map<std::string, Dtype>& loss_map) override
+	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
 	{
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
-		rmse = sqrt(rmse / test_data->num_samples);
-		mae /= test_data->num_samples;
+		rmse = sqrt(rmse / dataset->num_samples);
+		mae /= dataset->num_samples;
 		std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse) << std::endl;
 	}
 
@@ -100,9 +100,12 @@ public:
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{
-		
+		this->net_test.GetDenseNodeState("expact_0", buf);
+        for (size_t i = 0; i < buf.rows; ++i)
+            fprintf(fid, "%.6f\n", buf.data[i]);
 	}
 
+	DenseMat<CPU, Dtype> buf;
 };
 
 #endif
