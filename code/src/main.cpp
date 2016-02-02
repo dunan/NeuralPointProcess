@@ -18,7 +18,7 @@
 #include "batch_norm_param.h"
 #include "config.h"
 #include "data_loader.h"
-#include "synthetic_data_loader.h"
+#include "data_adapter.h"
 #include "time_net.h"
 #include "joint_net.h"
 #include "event_net.h"
@@ -53,7 +53,7 @@ int main(const int argc, const char** argv)
     cfg::LoadParams(argc, argv);    
 	GPUHandle::Init(cfg::dev_id);
     
-    LoadSyntheticData();
+    LoadDataFromFile();
 
     if (cfg::device_type == CPU)
         Work<CPU>();

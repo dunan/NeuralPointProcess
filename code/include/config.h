@@ -28,7 +28,7 @@ struct cfg
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test;
+    static bool save_eval, save_test, has_eval;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -61,6 +61,8 @@ struct cfg
                 save_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_test") == 0)
                 save_test = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-eval") == 0)
+                has_eval = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -137,6 +139,7 @@ Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
 bool cfg::save_test = false;
+bool cfg::has_eval = false;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";
