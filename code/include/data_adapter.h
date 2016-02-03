@@ -80,6 +80,8 @@ inline void LoadDataFromFile()
     	for (unsigned i = 0; i < raw_event_data.size(); ++i)
     	{
         	assert(raw_event_data[i].size() == raw_time_data[i].size());
+        	for (size_t j = 0; j < raw_event_data[i].size(); ++j)
+        		assert(raw_event_data[i][j] >= 0);
         	auto& time_label = raw_time_data[i];
         	ProcessTimeDataLabel(time_data, time_label);
 

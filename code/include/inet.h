@@ -48,13 +48,13 @@ public:
         FILE* fid = nullptr;
         if (save_prediction)
             fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
-
+        
         while (dataset->NextBatch(g_last_hidden_test, 
                                   g_event_input[0], 
                                   g_time_input[0], 
                                   g_event_label[0], 
                                   g_time_label[0]))
-        {
+        {            
             net_test.ForwardData(test_feat, TEST);
             auto loss_map = net_test.ForwardLabel(test_label);
 
@@ -67,7 +67,7 @@ public:
             if (save_prediction)
                 WriteTestBatch(fid);
             if (cfg::bptt > 1)
-                net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);
+                net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);            
         }
         if (save_prediction)
             fclose(fid);
