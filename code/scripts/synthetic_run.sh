@@ -1,15 +1,17 @@
 #!/bin/bash
 
-task=${1:-mixture}
+task=${1:-mixture-HMM}
+f_event=event-temporal-3.txt
+f_time=time-temporal-3.txt
 
 input_dir="${DATA_ROOT:-$HOME/Research/NeuralPointProcess/data/synthetic}/$task"
 RESULT_ROOT=${RESULT_ROOT:-$HOME/scratch/results/NeuralPointProcess}
 
-n_embed=256
-H=256
+n_embed=128
+H=128
 bsize=64
-bptt=1
-learning_rate=0.001
+bptt=5
+learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 T=24
@@ -25,9 +27,9 @@ fi
 
 dev_id=0
 
-./build/synthetic \
-    -event $input_dir/event.txt \
-    -time $input_dir/time.txt \
+./build/main \
+    -event $DATA_ROOT/$f_event \
+    -time $DATA_ROOT/$f_time \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \

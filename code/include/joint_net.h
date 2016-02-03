@@ -125,12 +125,24 @@ public:
 
     virtual void WriteTestBatch(FILE* fid) override
     {
-        this->net_test.GetDenseNodeState("expact_0", buf);
-        for (size_t i = 0; i < buf.rows; ++i)
-            fprintf(fid, "%.6f\n", buf.data[i]);
+        this->net_test.GetDenseNodeState("expact_0", time_pred);
+        this->net_test.GetDenseNodeState("event_out_0", event_pred);
+        for (size_t i = 0; i < time_pred.rows; ++i)
+        {
+            fprintf(fid, "%.6f ", time_pred.data[i]);
+            int pred = 0; 
+            Dtype best = event_pred.data[i * event_pred.cols];
+            for (size_t j = 1; j < event_pred.cols; ++j)
+                if (event_pred.data[i * event_pred.cols + j] > best)
+                {
+                    best = event_pred.data[i * event_pred.cols + j]; 
+                    pred = j;
+                }
+            fprintf(fid, "%d\n", pred);
+        }
     }
 
-    DenseMat<CPU, Dtype> buf;
+    DenseMat<CPU, Dtype> time_pred, event_pred;
 };
 
 #endif

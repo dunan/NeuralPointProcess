@@ -1,17 +1,25 @@
 #!/bin/bash
 
-DATA_ROOT=$HOME/scratch/data/dataset/NeuralPointProcess/lastfm
-RESULT_ROOT=$HOME/scratch/results/MolecularSpace/NeuralPointProcess/lastfm
+task=lastfm
+f_event=event.txt
+f_time=time.txt
 
-n_hidden=256
-n_embed=128
-bsize=256
-learning_rate=0.001
+DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
+RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
+
+n_embed=32
+H=32
+bsize=64
 bptt=2
+learning_rate=0.0001
 max_iter=4000
-mode=GPU
-
-save_dir=$RESULT_ROOT/saved-hidden-$n_hidden-embed-$n_embed-bptt-$bptt
+cur_iter=0
+test_pct=0.1
+T=0
+w_scale=0.01
+mode=CPU
+net=joint
+save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
 then
@@ -20,4 +28,25 @@ fi
 
 dev_id=0
 
-./build/neural_pointprocess -time $DATA_ROOT/time.txt -event $DATA_ROOT/event.txt -lr $learning_rate -mode $mode -device $dev_id -maxe $max_iter -svdir $save_dir -hidden $n_hidden -embed $n_embed -b $bsize -int_report 1 -int_test 50000 2>&1 | tee $save_dir/log.txt
+./build/main \
+    -test_pct $test_pct \
+    -event $DATA_ROOT/$f_event \
+    -time $DATA_ROOT/$f_time \
+    -lr $learning_rate \
+    -device $dev_id \
+    -maxe $max_iter \
+    -svdir $save_dir \
+    -hidden $H \
+    -embed $n_embed \
+    -save_eval 0 \
+    -T $T \
+    -b $bsize \
+    -w_scale $w_scale \
+    -int_report 500 \
+    -int_test 2500 \
+    -int_save 2500 \
+    -bptt $bptt \
+    -cur_iter $cur_iter \
+    -mode $mode \
+    -net $net \
+    2>&1 | tee $save_dir/log.txt

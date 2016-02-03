@@ -96,9 +96,23 @@ public:
 	}
 
 	virtual void WriteTestBatch(FILE* fid) override
-	{
+	{        
+        this->net_test.GetDenseNodeState("event_out_0", buf);
+        for (size_t i = 0; i < buf.rows; ++i)
+        {
+            int pred = 0; 
+            Dtype best = buf.data[i * buf.cols];
+            for (size_t j = 1; j < buf.cols; ++j)
+                if (buf.data[i * buf.cols + j] > best)
+                {
+                    best = buf.data[i * buf.cols + j]; 
+                    pred = j;
+                }
+            fprintf(fid, "%d\n", pred);
+        }
 	}
 
+    DenseMat<CPU, Dtype> buf;
 };
 
 #endif
