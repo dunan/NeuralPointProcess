@@ -45,7 +45,7 @@ public:
         dataset->StartNewEpoch();
                 
         test_loss_map.clear();
-        FILE* fid; 
+        FILE* fid = nullptr;
         if (save_prediction)
             fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
 
@@ -102,9 +102,11 @@ public:
         	    
                 EvaluateDataset(test_data, false, test_loss_map);
                 PrintTestResults(test_data, test_loss_map);
-
-                EvaluateDataset(val_data, cfg::save_eval, test_loss_map);
-                PrintTestResults(val_data, test_loss_map);
+                if (cfg::has_eval)
+                {
+                    EvaluateDataset(val_data, cfg::save_eval, test_loss_map);
+                    PrintTestResults(val_data, test_loss_map);    
+                }                
         	}
         
         	if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)

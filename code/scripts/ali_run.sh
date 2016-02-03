@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=lastfm
+task=ali
 f_event=event.txt
 f_time=time.txt
 
@@ -14,7 +14,7 @@ bptt=2
 learning_rate=0.0001
 max_iter=4000
 cur_iter=0
-test_pct=0.1
+test_pct=0.5
 T=0
 w_scale=0.01
 mode=CPU

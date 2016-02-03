@@ -22,13 +22,13 @@ struct cfg
     static unsigned report_interval; 
     static unsigned save_interval; 
     static NetType net_type;
-    static Dtype lr;
+    static Dtype lr, test_pct;
     static Dtype l2_penalty; 
     static Dtype momentum; 
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test;
+    static bool save_eval, save_test, has_eval;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -61,6 +61,8 @@ struct cfg
                 save_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_test") == 0)
                 save_test = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-eval") == 0)
+                has_eval = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_data = argv[i + 1];                
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -89,6 +91,8 @@ struct cfg
     			l2_penalty = atof(argv[i + 1]);
             if (strcmp(argv[i], "-w_scale") == 0)
                 w_scale = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-test_pct") == 0)
+                test_pct = atof(argv[i + 1]);
     		if (strcmp(argv[i], "-m") == 0)
     			momentum = atof(argv[i + 1]);	
     		if (strcmp(argv[i], "-svdir") == 0)
@@ -97,6 +101,7 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 	
+        std::cerr << "test_pct = " << test_pct << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
@@ -130,6 +135,7 @@ unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
 Dtype cfg::T = 0;
+Dtype cfg::test_pct = 0.1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
@@ -137,6 +143,7 @@ Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
 bool cfg::save_test = false;
+bool cfg::has_eval = false;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";

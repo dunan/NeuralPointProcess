@@ -1,22 +1,24 @@
 #!/bin/bash
 
-task=mixture
+task=mixture-HMM
+f_event=event-temporal-3.txt
+f_time=time-temporal-3.txt
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=256
-H=256
+n_embed=128
+H=128
 bsize=64
-bptt=1
-learning_rate=0.001
+bptt=5
+learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 T=24
 w_scale=0.01
 mode=CPU
 net=joint
-save_dir=$RESULT_ROOT/saved-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
+save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
 then
@@ -25,9 +27,9 @@ fi
 
 dev_id=0
 
-./build/synthetic \
-    -event $DATA_ROOT/event.txt \
-    -time $DATA_ROOT/time.txt \
+./build/main \
+    -event $DATA_ROOT/$f_event \
+    -time $DATA_ROOT/$f_time \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
