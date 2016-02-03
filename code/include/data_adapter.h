@@ -45,7 +45,7 @@ inline void LoadDataFromFile()
     		int seg_len = data_len / cfg::batch_size;
         
     		int num_seg = seg_len / cfg::bptt;
-    		int test_len = (int)(num_seg * 0.1) * cfg::bptt;
+    		int test_len = (int)(num_seg * cfg::test_pct) * cfg::bptt;
     		int train_len = seg_len - test_len;
                 
     		Dtype* time_data_ptr = time_data.data(); 
@@ -75,6 +75,8 @@ inline void LoadDataFromFile()
         		time_label_ptr += test_len;
     		}
     } else { // multiple sequences, real data
+    	std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
+    	int num_used = 0;
     	for (unsigned i = 0; i < raw_event_data.size(); ++i)
     	{
         	assert(raw_event_data[i].size() == raw_time_data[i].size());
@@ -82,7 +84,7 @@ inline void LoadDataFromFile()
         	ProcessTimeDataLabel(time_data, time_label);
 
         	int origin_len = raw_event_data[i].size();
-        	int test_len = origin_len * 0.1;
+        	int test_len = origin_len * cfg::test_pct;
         	int train_len = origin_len - test_len;
 
         	if (test_len == 0)
@@ -90,6 +92,7 @@ inline void LoadDataFromFile()
         		std::cerr << "dropped short sequence in " << i << std::endl;
         		continue;
         	}
+        	num_used++;
         	train_data->InsertSequence(raw_event_data[i].data(), 
             	                       time_data.data(), 
                 	                   time_label.data() + 1, 
@@ -100,7 +103,7 @@ inline void LoadDataFromFile()
                 	                  time_label.data() + train_len,
                     	              test_len); 
     	}
-    	std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
+    	std::cerr << num_used << " sequences in use." << std::endl;
     }
 }
 

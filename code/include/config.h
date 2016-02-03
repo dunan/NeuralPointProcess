@@ -22,7 +22,7 @@ struct cfg
     static unsigned report_interval; 
     static unsigned save_interval; 
     static NetType net_type;
-    static Dtype lr;
+    static Dtype lr, test_pct;
     static Dtype l2_penalty; 
     static Dtype momentum; 
     static MatMode device_type;
@@ -91,6 +91,8 @@ struct cfg
     			l2_penalty = atof(argv[i + 1]);
             if (strcmp(argv[i], "-w_scale") == 0)
                 w_scale = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-test_pct") == 0)
+                test_pct = atof(argv[i + 1]);
     		if (strcmp(argv[i], "-m") == 0)
     			momentum = atof(argv[i + 1]);	
     		if (strcmp(argv[i], "-svdir") == 0)
@@ -99,6 +101,7 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 	
+        std::cerr << "test_pct = " << test_pct << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
@@ -132,6 +135,7 @@ unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
 Dtype cfg::T = 0;
+Dtype cfg::test_pct = 0.1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
