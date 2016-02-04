@@ -7,8 +7,8 @@ f_time=time.txt
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=32
-H=32
+n_embed=128
+H=128
 bsize=64
 bptt=2
 learning_rate=0.0001
