@@ -10,6 +10,7 @@ setup(
     entry_points='''
         [console_scripts]
         event_baseline=event_baseline:run
+        time_baseline=time_baseline:run
     '''
 )
 
