@@ -100,13 +100,13 @@ public:
 	        {
     	        std::cerr << "testing" << std::endl;
         	    
-                EvaluateDataset(test_data, false, test_loss_map);
+                EvaluateDataset(test_data, cfg::save_test, test_loss_map);
                 PrintTestResults(test_data, test_loss_map);
                 if (cfg::has_eval)
                 {
                     EvaluateDataset(val_data, cfg::save_eval, test_loss_map);
                     PrintTestResults(val_data, test_loss_map);    
-                }                
+                }
         	}
         
         	if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)

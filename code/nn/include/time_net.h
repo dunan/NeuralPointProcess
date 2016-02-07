@@ -100,12 +100,13 @@ public:
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{
-		this->net_test.GetDenseNodeState("expact_0", buf);
+		this->net_test.GetDenseNodeState("expact_0", buf);		
+		buf2.CopyFrom(this->g_time_label[0]->node_states->DenseDerived());
         for (size_t i = 0; i < buf.rows; ++i)
-            fprintf(fid, "%.6f\n", buf.data[i]);
+            fprintf(fid, "%.6f %.6f\n",  buf.data[i], buf2.data[i]);
 	}
 
-	DenseMat<CPU, Dtype> buf;
+	DenseMat<CPU, Dtype> buf, buf2;
 };
 
 #endif

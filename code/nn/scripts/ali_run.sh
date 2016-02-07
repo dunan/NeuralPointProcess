@@ -7,18 +7,18 @@ f_time=time.txt
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=128
-H=128
+n_embed=64
+H=64
 bsize=64
-bptt=3
+bptt=1
 learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 test_pct=0.1
 T=0
 w_scale=0.01
-mode=CPU
-net=joint
+mode=GPU
+net=time
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -36,9 +36,11 @@ dev_id=0
     -device $dev_id \
     -maxe $max_iter \
     -svdir $save_dir \
+    -m 0.9 \
     -hidden $H \
     -embed $n_embed \
     -save_eval 0 \
+    -save_test 1 \
     -T $T \
     -b $bsize \
     -w_scale $w_scale \
