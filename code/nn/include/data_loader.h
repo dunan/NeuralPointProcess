@@ -57,7 +57,6 @@ public:
     }
     
     size_t num_samples, num_events, batch_size; 
-
 private:
     void ReloadSlot(unsigned batch_idx)    
     {
@@ -147,7 +146,9 @@ protected:
         
         feat.CopyFrom(time_feat_cpu);
         label.CopyFrom(time_label_cpu);
-    } 
+    }
+
+
    
     bool initialized;
     std::vector< std::pair<unsigned, unsigned> > cursors;                 
@@ -328,59 +329,6 @@ inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input,
 
 DataLoader<TRAIN>* train_data;
 DataLoader<TEST>* test_data, *val_data;
-
-template<typename data_type>
-inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data)
-{
-    raw_data.clear();
-    std::ifstream f_stream(filename);
-    std::string read_buf;
-    data_type d;
-    while (getline(f_stream, read_buf))
-    {
-        std::stringstream ss(read_buf);
-        std::vector<data_type> cur_seq;
-        cur_seq.clear();
-        while (ss >> d)
-        {
-            cur_seq.push_back(d); 
-        }
-        raw_data.push_back(cur_seq);
-    }       
-}
-
-inline void LoadRawTimeEventData(std::vector< std::vector<int> >& raw_event_data, 
-                                 std::vector< std::vector<Dtype> >& raw_time_data)
-{
-    std::cerr << "loading data..." << std::endl;
-    assert(cfg::f_time_data && cfg::f_event_data);   
-
-    LoadRaw(cfg::f_event_data, raw_event_data);
-    LoadRaw(cfg::f_time_data, raw_time_data);
-
-    assert(raw_event_data.size() == raw_time_data.size());
-    std::set<int> label_set;
-    label_set.clear();
-    int min_id = 100000, max_id = 0;
-    for (unsigned i = 0; i < raw_event_data.size(); ++i)
-    {
-        for (unsigned j = 0; j < raw_event_data[i].size(); ++j)
-        {
-            raw_event_data[i][j]--; // the raw event is 1 based
-            label_set.insert(raw_event_data[i][j]);
-            if (raw_event_data[i][j] < min_id)
-                min_id = raw_event_data[i][j];
-            if (raw_event_data[i][j] > max_id)
-                max_id = raw_event_data[i][j];
-        }
-    }
-    std::cerr << min_id << " " << max_id << " " << label_set.size() << std::endl;
-    assert(min_id == 0 && max_id + 1 == label_set.size());
-    std::cerr << "totally " << label_set.size() << " events" << std::endl;
-    train_data = new DataLoader<TRAIN>(label_set.size(), cfg::batch_size); 
-    test_data = new DataLoader<TEST>(label_set.size(), cfg::batch_size);
-    val_data = new DataLoader<TEST>(label_set.size(), 1);
-}
 
 
 #endif

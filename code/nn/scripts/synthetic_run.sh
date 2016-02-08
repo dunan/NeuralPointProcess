@@ -1,8 +1,8 @@
 #!/bin/bash
 
 task=mixture-HMM
-f_event=event-temporal-3.txt
-f_time=time-temporal-3.txt
+prefix_event=event-temporal-3
+prefix_time=time-temporal-3
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -28,15 +28,15 @@ fi
 dev_id=0
 
 ./build/main \
-    -event $DATA_ROOT/$f_event \
-    -time $DATA_ROOT/$f_time \
+    -event $DATA_ROOT/$prefix_event \
+    -time $DATA_ROOT/$prefix_time \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
     -svdir $save_dir \
     -hidden $H \
     -embed $n_embed \
-    -save_eval 1 \
+    -save_eval 0 \
     -T $T \
     -b $bsize \
     -w_scale $w_scale \

@@ -126,7 +126,7 @@ public:
         	auto loss_map = net_train.ForwardLabel(train_label);
             if (cfg::bptt > 1)
             {
-                net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+                //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
 
             net_train.BackPropagation();

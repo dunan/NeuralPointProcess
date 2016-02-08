@@ -1,7 +1,7 @@
 import sys
 import getopt
 import os
-
+import numpy as np
 
 def load_file(filename):
     fid = open(filename, 'r')
@@ -22,9 +22,9 @@ def save_sequence(filename, sequence):
 
 if __name__ == '__main__':
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "e:t:p:n:")
+        opts, args = getopt.getopt(sys.argv[1:], "e:t:p:n:s:")
     except getopt.GetoptError:
-        print '-e <event file> -t <time file> -p <test percent>'
+        print '-e <event file> -t <time file> -p <test percent> -n <num_sequences>'
         sys.exit(2)
 
     event_file = ''
@@ -40,6 +40,8 @@ if __name__ == '__main__':
             percent = float(arg)
         elif opt == '-n':
             num_seqs = int(arg)
+        elif opt == '-s':
+            shift = int(arg)
 
     folder, e_file = os.path.split(event_file)
     e_file_name = os.path.splitext(e_file)[0]
@@ -58,13 +60,35 @@ if __name__ == '__main__':
         test_len = int(seg_len * percent)
         train_len = seg_len - test_len
 
+        prev_time = 0
         for i in range(num_seqs):
-            train_time.append(time_lines[0][i * seg_len : i * seg_len + train_len])
             train_event.append(event_lines[0][i * seg_len : i * seg_len + train_len])
-            test_time.append(time_lines[0][i * seg_len + train_len - 1 : (i + 1) * seg_len])
-            test_event.append(event_lines[0][i * seg_len + train_len - 1 : (i + 1) * seg_len])
+            test_event.append(event_lines[0][i * seg_len + train_len : (i + 1) * seg_len])
+
+            train_time.append(time_lines[0][i * seg_len : i * seg_len + train_len])
+            test_time.append(time_lines[0][i * seg_len + train_len : (i + 1) * seg_len])
+
+            if shift:
+                for j in range(len(train_time[-1])):
+                    train_time[-1][j] = str(float(train_time[-1][j]) - prev_time)
+
+                prev_time = float(time_lines[0][i * seg_len + train_len - 1])
+                for j in range(len(test_time[-1])):
+                    test_time[-1][j] = str(float(test_time[-1][j]) - prev_time)
+                if i < num_seqs - 1:
+                    prev_time = float(time_lines[0][(i + 1) * seg_len - 1])
     else:
-        print 'hello'
+        p = np.random.permutation(len(time_lines))
+        num_test_seqs = int(len(p) * percent)
+        num_train_seqs = len(p) - num_test_seqs
+        
+        for i in range(num_train_seqs):
+            train_time.append(time_lines[p[i]])
+            train_event.append(event_lines[p[i]])
+
+        for i in range(num_test_seqs):
+            test_time.append(time_lines[p[i + num_train_seqs]])
+            test_event.append(event_lines[p[i + num_train_seqs]])
 
     print folder, e_file_name, t_file_name
     save_sequence('%s/%s-train.txt' % (folder, t_file_name), train_time)
