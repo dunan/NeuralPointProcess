@@ -2,6 +2,7 @@
 #define cfg_H
 
 typedef double Dtype;
+#include "cppformat/format.h"
 
 enum class NetType
 {
@@ -22,21 +23,21 @@ struct cfg
     static unsigned report_interval; 
     static unsigned save_interval; 
     static NetType net_type;
-    static Dtype lr, test_pct;
+    static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test, has_eval, heldout_eval;
-    static const char *f_time_data, *f_event_data, *save_dir;
+    static bool save_eval, save_test, has_eval;
+    static const char *f_time_prefix, *f_event_prefix, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
     {
         for (int i = 1; i < argc; i += 2)
         {
             if (strcmp(argv[i], "-time") == 0)
-                f_time_data = argv[i + 1];
+                f_time_prefix = argv[i + 1];
             if (strcmp(argv[i], "-mode") == 0)
 		    {
 		        if (strcmp(argv[i + 1], "CPU") == 0)
@@ -57,8 +58,6 @@ struct cfg
                 else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
-            if (strcmp(argv[i], "-heldout") == 0)
-                heldout_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_eval") == 0)
                 save_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_test") == 0)
@@ -66,7 +65,7 @@ struct cfg
             if (strcmp(argv[i], "-eval") == 0)
                 has_eval = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
-		        f_event_data = argv[i + 1];                
+		        f_event_prefix = argv[i + 1];
 		    if (strcmp(argv[i], "-lr") == 0)
 		        lr = atof(argv[i + 1]);
             if (strcmp(argv[i], "-T") == 0)
@@ -93,8 +92,6 @@ struct cfg
     			l2_penalty = atof(argv[i + 1]);
             if (strcmp(argv[i], "-w_scale") == 0)
                 w_scale = atof(argv[i + 1]);
-            if (strcmp(argv[i], "-test_pct") == 0)
-                test_pct = atof(argv[i + 1]);
     		if (strcmp(argv[i], "-m") == 0)
     			momentum = atof(argv[i + 1]);	
     		if (strcmp(argv[i], "-svdir") == 0)
@@ -103,8 +100,6 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 	
-        std::cerr << "heldout_eval = " << heldout_eval << std::endl;
-        std::cerr << "test_pct = " << test_pct << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
@@ -138,7 +133,6 @@ unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
 Dtype cfg::T = 0;
-Dtype cfg::test_pct = 0.1;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
 Dtype cfg::momentum = 0;
@@ -147,9 +141,8 @@ MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
 bool cfg::save_test = false;
 bool cfg::has_eval = false;
-bool cfg::heldout_eval = true;
-const char* cfg::f_time_data = nullptr;
-const char* cfg::f_event_data = nullptr;
+const char* cfg::f_time_prefix = nullptr;
+const char* cfg::f_event_prefix = nullptr;
 const char* cfg::save_dir = "./saved";
 NetType cfg::net_type = NetType::TIME;
 

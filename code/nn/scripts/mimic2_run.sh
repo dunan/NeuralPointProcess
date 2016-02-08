@@ -1,8 +1,8 @@
 #!/bin/bash
 
 task=mimic2
-f_event=event.txt
-f_time=time.txt
+prefix_event=event
+prefix_time=time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -17,9 +17,8 @@ cur_iter=0
 test_pct=0.1
 T=0
 w_scale=0.01
-mode=GPU
+mode=CPU
 net=event
-heldout_eval=1
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -30,10 +29,9 @@ fi
 dev_id=0
 
 ./build/main \
-    -heldout $heldout_eval \
     -test_pct $test_pct \
-    -event $DATA_ROOT/$f_event \
-    -time $DATA_ROOT/$f_time \
+    -event $DATA_ROOT/$prefix_event \
+    -time $DATA_ROOT/$prefix_time \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \

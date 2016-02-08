@@ -10,7 +10,6 @@
 #include "graphnn.h"
 #include "param_layer.h"
 #include "input_layer.h"
-#include "cppformat/format.h"
 #include "relu_layer.h"
 #include "exp_layer.h"
 #include "mse_criterion_layer.h"

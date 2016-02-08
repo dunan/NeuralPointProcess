@@ -1,8 +1,8 @@
 #!/bin/bash
 
 task=lastfm
-f_event=event.txt
-f_time=time.txt
+prefix_event=event
+prefix_time=time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -10,11 +10,10 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 n_embed=128
 H=128
 bsize=64
-bptt=5
+bptt=8
 learning_rate=0.01
 max_iter=4000
 cur_iter=0
-test_pct=0.5
 T=0
 w_scale=0.01
 mode=GPU
@@ -29,9 +28,8 @@ fi
 dev_id=0
 
 ./build/main \
-    -test_pct $test_pct \
-    -event $DATA_ROOT/$f_event \
-    -time $DATA_ROOT/$f_time \
+    -event $DATA_ROOT/$prefix_event \
+    -time $DATA_ROOT/$prefix_time \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
