@@ -76,36 +76,78 @@ inline void LoadDataFromFile()
     		}
     } else { // multiple sequences, real data
     	std::cerr << raw_event_data.size() << " sequences loaded." << std::endl;
-    	int num_used = 0;
-    	for (unsigned i = 0; i < raw_event_data.size(); ++i)
-    	{
-        	assert(raw_event_data[i].size() == raw_time_data[i].size());
-        	for (size_t j = 0; j < raw_event_data[i].size(); ++j)
-        		assert(raw_event_data[i][j] >= 0);
-        	auto& time_label = raw_time_data[i];
-        	ProcessTimeDataLabel(time_data, time_label);
+    	int train_seqs = 0, test_seqs = 0;
+        for (unsigned i = 0; i < raw_event_data.size(); ++i)
+        {
+            assert(raw_event_data[i].size() == raw_time_data[i].size());
+            for (size_t j = 0; j < raw_event_data[i].size(); ++j)
+                assert(raw_event_data[i][j] >= 0);
+        }
+        if (!cfg::heldout_eval)
+        {
+            for (unsigned i = 0; i < raw_event_data.size(); ++i)
+            {
+                auto& time_label = raw_time_data[i];
+                ProcessTimeDataLabel(time_data, time_label);
 
-        	int origin_len = raw_event_data[i].size();
-        	int test_len = origin_len * cfg::test_pct;
-        	int train_len = origin_len - test_len;
+                int origin_len = raw_event_data[i].size();
+                int test_len = origin_len * cfg::test_pct;
+                int train_len = origin_len - test_len;
 
-        	if (test_len == 0)
-        	{
-        		std::cerr << "dropped short sequence in " << i << std::endl;
-        		continue;
-        	}
-        	num_used++;
-        	train_data->InsertSequence(raw_event_data[i].data(), 
-            	                       time_data.data(), 
-                	                   time_label.data() + 1, 
-                    	               train_len);
-        	test_len++;
-        	test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, 
-            	                      time_data.data() + train_len - 1, 
-                	                  time_label.data() + train_len,
-                    	              test_len); 
-    	}
+                if (test_len == 0 || train_len <= (int)cfg::bptt)
+                {
+                    std::cerr << "dropped short sequence in " << i << std::endl;
+                    continue;
+                }
+                train_seqs++;
+                test_seqs++;
+                train_data->InsertSequence(raw_event_data[i].data(), 
+                                           time_data.data(), 
+                                           time_label.data() + 1, 
+                                           train_len);
+                test_len++;
+                test_data->InsertSequence(raw_event_data[i].data() + train_len - 1, 
+                                          time_data.data() + train_len - 1, 
+                                          time_label.data() + train_len,
+                                          test_len); 
+            }
+        } else 
+        {
+            int num_test_seqs = raw_event_data.size() * cfg::test_pct;
+            int num_train_seqs = raw_event_data.size() - num_test_seqs;
+
+            for (int i = 0; i < num_train_seqs; ++i)
+            {
+                auto& time_label = raw_time_data[i];
+                ProcessTimeDataLabel(time_data, time_label);
+
+                if (time_label.size() <= cfg::bptt)
+                {
+                    std::cerr << "dropped short sequence in " << i << std::endl;
+                    continue;
+                }
+                train_seqs++;
+                train_data->InsertSequence(raw_event_data[i].data(), 
+                                           time_data.data(), 
+                                           time_label.data() + 1, 
+                                           raw_event_data[i].size());
+            }
+
+            for (unsigned i = num_train_seqs; i < raw_event_data.size(); ++i)
+            {
+                auto& time_label = raw_time_data[i];
+                ProcessTimeDataLabel(time_data, time_label);
+
+                test_seqs++;
+                test_data->InsertSequence(raw_event_data[i].data(), 
+                                          time_data.data(), 
+                                          time_label.data() + 1, 
+                                          raw_event_data[i].size());
+            }
+        }
+    	
     	std::cerr << num_used << " sequences in use." << std::endl;
+        std::cerr << "#train: " << train_data->num_samples << " #test: " << test_data->num_samples << std::endl;
     }
 }
 

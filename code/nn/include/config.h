@@ -28,7 +28,7 @@ struct cfg
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test, has_eval;
+    static bool save_eval, save_test, has_eval, heldout_eval;
     static const char *f_time_data, *f_event_data, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -57,6 +57,8 @@ struct cfg
                 else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
+            if (strcmp(argv[i], "-heldout") == 0)
+                heldout_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_eval") == 0)
                 save_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-save_test") == 0)
@@ -101,6 +103,7 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 	
+        std::cerr << "heldout_eval = " << heldout_eval << std::endl;
         std::cerr << "test_pct = " << test_pct << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
@@ -144,6 +147,7 @@ MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
 bool cfg::save_test = false;
 bool cfg::has_eval = false;
+bool cfg::heldout_eval = true;
 const char* cfg::f_time_data = nullptr;
 const char* cfg::f_event_data = nullptr;
 const char* cfg::save_dir = "./saved";

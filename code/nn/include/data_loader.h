@@ -375,7 +375,7 @@ inline void LoadRawTimeEventData(std::vector< std::vector<int> >& raw_event_data
         }
     }
     std::cerr << min_id << " " << max_id << " " << label_set.size() << std::endl;
-    assert(min_id == 0 && max_id + 1 == label_set.size());
+    assert(min_id == 0 && max_id + 1 == (int)label_set.size());
     std::cerr << "totally " << label_set.size() << " events" << std::endl;
     train_data = new DataLoader<TRAIN>(label_set.size(), cfg::batch_size); 
     test_data = new DataLoader<TEST>(label_set.size(), cfg::batch_size);
