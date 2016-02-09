@@ -20,8 +20,9 @@ template<MatMode mode, typename Dtype>
 class INet
 {
 public:
-	INet()
+	INet(IEventTimeLoader<mode>* _etloader)
 	{
+        this->etloader = _etloader;
         initialized = false;
         g_last_hidden_train = new GraphData<mode, Dtype>(DENSE);
         g_last_hidden_test = new GraphData<mode, Dtype>(DENSE);
@@ -49,7 +50,8 @@ public:
         if (save_prediction)
             fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
         
-        while (dataset->NextBatch(g_last_hidden_test, 
+        while (dataset->NextBatch(etloader, 
+                                  g_last_hidden_test, 
                                   g_event_input[0], 
                                   g_time_input[0], 
                                   g_event_label[0], 
@@ -115,7 +117,8 @@ public:
                 net_train.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
         	}
         
-        	train_data->NextBpttBatch(cfg::bptt, 
+        	train_data->NextBpttBatch(etloader, 
+                                      cfg::bptt, 
             	                      g_last_hidden_train, 
                 	                  g_event_input, 
                     	              g_time_input, 
@@ -126,7 +129,7 @@ public:
         	auto loss_map = net_train.ForwardLabel(train_label);
             if (cfg::bptt > 1)
             {
-                //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+                net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
 
             net_train.BackPropagation();
@@ -144,6 +147,7 @@ public:
 	GraphNN<mode, Dtype> net_train, net_test;
 	std::vector< GraphData<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
 	std::map<std::string, GraphData<mode, Dtype>* > train_feat, train_label, test_feat, test_label;
+    IEventTimeLoader<mode>* etloader;
 
     bool initialized;
     void InitNet(GraphNN<mode, Dtype>& gnn, 

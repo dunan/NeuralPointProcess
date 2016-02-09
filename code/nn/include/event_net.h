@@ -7,7 +7,7 @@ template<MatMode mode, typename Dtype>
 class EventNet : public INet<mode, Dtype>
 {
 public:
-	EventNet() : INet<mode, Dtype>() {}
+	EventNet(IEventTimeLoader<mode>* _etloader) : INet<mode, Dtype>(_etloader) {}
 
 	virtual void LinkTrainData() override
 	{

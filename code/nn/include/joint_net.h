@@ -8,7 +8,7 @@ class JointNet : public INet<mode, Dtype>
 {
 public:
 
-	JointNet() : INet<mode, Dtype>() {}
+	JointNet(IEventTimeLoader<mode>* _etloader) : INet<mode, Dtype>(_etloader) {}
 
 	virtual void LinkTrainData() override 
 	{

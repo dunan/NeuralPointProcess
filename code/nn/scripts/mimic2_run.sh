@@ -7,7 +7,7 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=64
+n_embed=128
 H=64
 bsize=64
 bptt=2
@@ -18,7 +18,7 @@ test_pct=0.1
 T=0
 w_scale=0.01
 mode=CPU
-net=event
+net=joint
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];

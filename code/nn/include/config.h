@@ -13,7 +13,7 @@ enum class NetType
 
 struct cfg
 {
-    static int dev_id, iter; 
+    static int dev_id, iter;
     static unsigned bptt, n_recur_layers;     
     static unsigned n_hidden; 
     static unsigned n_embed; 
@@ -29,7 +29,7 @@ struct cfg
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test, has_eval;
+    static bool save_eval, save_test, has_eval, multidim_time;
     static const char *f_time_prefix, *f_event_prefix, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -64,6 +64,8 @@ struct cfg
                 save_test = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-eval") == 0)
                 has_eval = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-mt") == 0)
+                multidim_time = (bool)atoi(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
 		        f_event_prefix = argv[i + 1];
 		    if (strcmp(argv[i], "-lr") == 0)
@@ -100,6 +102,7 @@ struct cfg
     			dev_id = atoi(argv[i + 1]);
         }
 	
+        std::cerr << "multidim_time = " << multidim_time << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
         std::cerr << "n_embed = " << n_embed << std::endl;
@@ -141,6 +144,7 @@ MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
 bool cfg::save_test = false;
 bool cfg::has_eval = false;
+bool cfg::multidim_time = false;
 const char* cfg::f_time_prefix = nullptr;
 const char* cfg::f_event_prefix = nullptr;
 const char* cfg::save_dir = "./saved";

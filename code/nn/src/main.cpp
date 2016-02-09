@@ -26,17 +26,21 @@ template<MatMode mode>
 void Work()
 {
     INet<mode, Dtype>* net; 
-
+    IEventTimeLoader<mode>* etloader = nullptr;
+    if (cfg::multidim_time)
+        etloader = new MultiTimeLoader<mode>();
+    else 
+        etloader = new SingleTimeLoader<mode>();
     switch (cfg::net_type)
     {
         case NetType::TIME:
-            net = new TimeNet<mode, Dtype>();
+            net = new TimeNet<mode, Dtype>(etloader);
             break;
         case NetType::JOINT:
-            net = new JointNet<mode, Dtype>();
+            net = new JointNet<mode, Dtype>(etloader);
             break;
         case NetType::EVENT:
-            net = new EventNet<mode, Dtype>();
+            net = new EventNet<mode, Dtype>(etloader);
             break;
         default:
             std::cerr << "unsupported nettype" << std::endl;

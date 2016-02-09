@@ -13,6 +13,9 @@
 #include "mkl_helper.h"
 #include "cuda_helper.h"
 
+template<MatMode mode>
+class IEventTimeLoader;
+
 class IDataLoader
 {
 public:
@@ -57,7 +60,7 @@ public:
     }
     
     size_t num_samples, num_events, batch_size; 
-private:
+
     void ReloadSlot(unsigned batch_idx)    
     {
         index_pool.push_back(cursors[batch_idx].first); 
@@ -65,9 +68,6 @@ private:
         cursors[batch_idx].second = 0;
         index_pool.pop_front();
     }
-
-protected:
-
 
     template<typename data_type>
     inline void InsertSequence(data_type* seq, std::vector< std::vector<data_type> >& sequences, int seq_len)
@@ -94,69 +94,12 @@ protected:
 
         ReloadSlot(batch_idx);
     }
-    
-    template<MatMode mode>
-    void LoadEvent(GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
-    {
-        g_feat->graph->Resize(1, cur_batch_size);
-        g_label->graph->Resize(1, cur_batch_size);
-
-        auto& feat = g_feat->node_states->SparseDerived();
-        auto& label = g_label->node_states->SparseDerived();
-        
-        event_feat_cpu.Resize(cur_batch_size, num_events);
-        event_feat_cpu.ResizeSp(cur_batch_size, cur_batch_size + 1); 
-        
-        event_label_cpu.Resize(cur_batch_size, num_events);
-        event_label_cpu.ResizeSp(cur_batch_size, cur_batch_size + 1);
-        
-        for (unsigned i = 0; i < cur_batch_size; ++i)
-        {
-            event_feat_cpu.data->ptr[i] = i;
-            event_feat_cpu.data->col_idx[i] = event_sequences[cursors[i].first][cursors[i].second + step]; 
-            event_feat_cpu.data->val[i] = 1;
-            
-            event_label_cpu.data->ptr[i] = i;
-            event_label_cpu.data->col_idx[i] = event_sequences[cursors[i].first][cursors[i].second + step + 1];
-            event_label_cpu.data->val[i] = 1;                        
-        }
-        event_feat_cpu.data->ptr[cur_batch_size] = cur_batch_size;
-        event_label_cpu.data->ptr[cur_batch_size] = cur_batch_size;
-        
-        feat.CopyFrom(event_feat_cpu);
-        label.CopyFrom(event_label_cpu);
-    } 
-    
-    template<MatMode mode>
-    void LoadTime(GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
-    {
-        g_feat->graph->Resize(1, cur_batch_size);
-        g_label->graph->Resize(1, cur_batch_size);
-        auto& feat = g_feat->node_states->DenseDerived();
-        auto& label = g_label->node_states->DenseDerived();
-        
-        time_feat_cpu.Resize(cur_batch_size, 1);
-        time_label_cpu.Resize(cur_batch_size, 1);
-        
-        for (unsigned i = 0; i < cur_batch_size; ++i)
-        {
-            time_feat_cpu.data[i] = time_sequences[cursors[i].first][cursors[i].second + step];
-            time_label_cpu.data[i] = time_label_sequences[cursors[i].first][cursors[i].second + step];
-        }
-        
-        feat.CopyFrom(time_feat_cpu);
-        label.CopyFrom(time_label_cpu);
-    }
-
-
    
     bool initialized;
     std::vector< std::pair<unsigned, unsigned> > cursors;                 
     std::vector< std::vector<int> > event_sequences;
     std::vector< std::vector<Dtype> > time_sequences, time_label_sequences;
     std::deque< unsigned > index_pool;
-    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;
-    DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;
 };
 
 
@@ -174,7 +117,8 @@ public:
     }
     
     template<MatMode mode>             
-    inline void NextBpttBatch(int bptt, GraphData<mode, Dtype>* g_last_hidden,
+    inline void NextBpttBatch(IEventTimeLoader<mode>* etloader, 
+                              int bptt, GraphData<mode, Dtype>* g_last_hidden,
                               std::vector< GraphData<mode, Dtype>* >& g_event_input,
                               std::vector< GraphData<mode, Dtype>* >& g_time_input, 
                               std::vector< GraphData<mode, Dtype>* >& g_event_label,
@@ -194,8 +138,8 @@ public:
         g_last_hidden->graph->Resize(1, this->batch_size);
         for (int j = 0; j < bptt; ++j)
         {                                  
-            this->LoadEvent(g_event_input[j], g_event_label[j], this->batch_size, j);                        
-            this->LoadTime(g_time_input[j], g_time_label[j], this->batch_size, j);           
+            etloader->LoadEvent(this, g_event_input[j], g_event_label[j], this->batch_size, j);                        
+            etloader->LoadTime(this, g_time_input[j], g_time_label[j], this->batch_size, j);           
         }        
         for (unsigned i = 0; i < this->batch_size; ++i)
             cursors[i].second += bptt;           
@@ -213,7 +157,8 @@ public:
     }    
     
     template<MatMode mode>
-    inline bool NextBatch(GraphData<mode, Dtype>* g_last_hidden,
+    inline bool NextBatch(IEventTimeLoader<mode>* etloader, 
+                          GraphData<mode, Dtype>* g_last_hidden,
                           GraphData<mode, Dtype>* g_event_input, 
                           GraphData<mode, Dtype>* g_time_input, 
                           GraphData<mode, Dtype>* g_event_label, 
@@ -280,8 +225,8 @@ public:
             cur_batch_size -= delta_size;
         }
         g_last_hidden->graph->Resize(1, cur_batch_size);
-        this->LoadEvent(g_event_input, g_event_label, cur_batch_size, 0);
-        this->LoadTime(g_time_input, g_time_label, cur_batch_size, 0);
+        etloader->LoadEvent(this, g_event_input, g_event_label, cur_batch_size, 0);
+        etloader->LoadTime(this, g_time_input, g_time_label, cur_batch_size, 0);
         for (unsigned i = 0; i < cur_batch_size; ++i)
             cursors[i].second++;         
         return true;
@@ -308,24 +253,88 @@ protected:
 }; 
 
 template<MatMode mode>
-inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input, 
-                   std::vector< GraphData<mode, Dtype>* >& g_event_label, 
-                   std::vector< GraphData<mode, Dtype>* >& g_time_input, 
-                   std::vector< GraphData<mode, Dtype>* >& g_time_label)
+class IEventTimeLoader
 {
-    g_event_input.clear();
-    g_event_label.clear();
-    g_time_input.clear();
-    g_time_label.clear();
-            
-    for (unsigned i = 0; i < cfg::bptt; ++i)
+public:
+    IEventTimeLoader() {}
+
+    
+    void LoadEvent(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
     {
-        g_event_input.push_back(new GraphData<mode, Dtype>(SPARSE));
-        g_event_label.push_back(new GraphData<mode, Dtype>(SPARSE));
-        g_time_input.push_back(new GraphData<mode, Dtype>(DENSE));
-        g_time_label.push_back(new GraphData<mode, Dtype>(DENSE));        
+        g_feat->graph->Resize(1, cur_batch_size);
+        g_label->graph->Resize(1, cur_batch_size);
+
+        auto& feat = g_feat->node_states->SparseDerived();
+        auto& label = g_label->node_states->SparseDerived();
+        
+        this->event_feat_cpu.Resize(cur_batch_size, d->num_events);
+        this->event_feat_cpu.ResizeSp(cur_batch_size, cur_batch_size + 1); 
+        
+        this->event_label_cpu.Resize(cur_batch_size, d->num_events);
+        this->event_label_cpu.ResizeSp(cur_batch_size, cur_batch_size + 1);
+        
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+        {
+            this->event_feat_cpu.data->ptr[i] = i;
+            this->event_feat_cpu.data->col_idx[i] = d->event_sequences[d->cursors[i].first][d->cursors[i].second + step]; 
+            this->event_feat_cpu.data->val[i] = 1;
+            
+            this->event_label_cpu.data->ptr[i] = i;
+            this->event_label_cpu.data->col_idx[i] = d->event_sequences[d->cursors[i].first][d->cursors[i].second + step + 1];
+            this->event_label_cpu.data->val[i] = 1;                        
+        }
+        this->event_feat_cpu.data->ptr[cur_batch_size] = cur_batch_size;
+        this->event_label_cpu.data->ptr[cur_batch_size] = cur_batch_size;
+        
+        feat.CopyFrom(this->event_feat_cpu);
+        label.CopyFrom(this->event_label_cpu);
+    } 
+
+    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) = 0;
+
+    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;
+    DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;
+};
+
+template<MatMode mode>
+class SingleTimeLoader : public IEventTimeLoader<mode>
+{
+public:
+    SingleTimeLoader() : IEventTimeLoader<mode>() {}
+
+    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
+    {
+        g_feat->graph->Resize(1, cur_batch_size);
+        g_label->graph->Resize(1, cur_batch_size);
+        auto& feat = g_feat->node_states->DenseDerived();
+        auto& label = g_label->node_states->DenseDerived();
+        
+        this->time_feat_cpu.Resize(cur_batch_size, 1);
+        this->time_label_cpu.Resize(cur_batch_size, 1);
+        
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+        {
+            this->time_feat_cpu.data[i] = d->time_sequences[d->cursors[i].first][d->cursors[i].second + step];
+            this->time_label_cpu.data[i] = d->time_label_sequences[d->cursors[i].first][d->cursors[i].second + step];
+        }
+        
+        feat.CopyFrom(this->time_feat_cpu);
+        label.CopyFrom(this->time_label_cpu);
     }
-}
+};
+
+template<MatMode mode>
+class MultiTimeLoader : public IEventTimeLoader<mode>
+{
+public:
+    MultiTimeLoader() : IEventTimeLoader<mode>() {}
+
+    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
+    {
+        assert(false);
+    }
+};
+
 
 DataLoader<TRAIN>* train_data;
 DataLoader<TEST>* test_data, *val_data;
