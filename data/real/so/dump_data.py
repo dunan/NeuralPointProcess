@@ -12,6 +12,6 @@ with pg.connect(database='stackexchange', user='utkarsh', password=G.getpass('DB
     with open(output_events, 'w') as f_events, open(output_time, 'w') as f_time:
         for row in cur:
             events, times = row[0], row[1]
-            f_events.write(','.join(str(x) for x in events))
+            f_events.write(','.join(str(x) for x in events) + '\n')
             # Can change times to something more granular than seconds.
-            f_time.write(','.join(str(x) for x in times))
+            f_time.write(','.join(str(x) for x in times) + '\n')
