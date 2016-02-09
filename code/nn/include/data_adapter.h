@@ -2,6 +2,7 @@
 #define DATA_ADAPTER_H
 
 #include "data_loader.h"
+#include <map>
 
 template<MatMode mode>
 inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input, 
@@ -61,30 +62,31 @@ inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >&
             cur_seq.push_back(d); 
         }
         raw_data.push_back(cur_seq);
-    }       
+    }
 }
 
 inline size_t GetNumEvents(std::vector< std::vector<int> >& raw_event_train, 
                            std::vector< std::vector<int> >& raw_event_test)
 {
-    std::set<int> label_set;
-    int min_id = 1000000000, max_id = 0;
+    std::map<int, int> label_map;
+    int num_events = 0;
+    
     for (unsigned i = 0; i < raw_event_train.size() + raw_event_test.size(); ++i)
     {
         auto& event_data = i < raw_event_train.size() ? raw_event_train[i] : raw_event_test[i - raw_event_train.size()];
         for (unsigned j = 0; j < event_data.size(); ++j)
         {
-            event_data[j]--;
-            label_set.insert(event_data[j]);
-            if (event_data[j] < min_id)
-                min_id = event_data[j];
-            if (event_data[j] > max_id)
-                max_id = event_data[j];
+            if (label_map.count(event_data[j]) == 0)
+            {
+                label_map[event_data[j]] = num_events;
+                num_events++;
+            }
+            event_data[j] = label_map[event_data[j]];
         }
     }
-    assert(min_id == 0 && max_id + 1 == (int)label_set.size());
-    std::cerr << "totally " << label_set.size() << " events" << std::endl;
-    return label_set.size();
+    assert(num_events == (int)label_map.size());
+    std::cerr << "totally " << label_map.size() << " events" << std::endl;
+    return label_map.size();
 }
 
 template<Phase phase>
@@ -110,11 +112,6 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
                                 time_label.data() + 1, 
                                 raw_event_data[i].size());
     }
-}
-
-Dtype GetEmpiricalVariance(std::vector< std::vector<Dtype> >& raw_time_data)
-{
-    return 0;
 }
 
 inline void LoadDataFromFile()

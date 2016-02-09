@@ -1,8 +1,8 @@
 #!/bin/bash
 
-task=ali
-prefix_event=event
-prefix_time=time
+task=taxi
+prefix_event=pickup_events
+prefix_time=pickup_time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -12,14 +12,14 @@ H=128
 bsize=64
 bptt=1
 learning_rate=0.01
-max_iter=4000
+max_iter=400
 cur_iter=0
 T=0
 w_scale=0.01
 mode=GPU
 net=event
 loss=mse
-lambda=0.0272763315213
+lambda=0.022488192683
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];

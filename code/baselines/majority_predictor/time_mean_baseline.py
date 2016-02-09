@@ -4,6 +4,7 @@ import math
 
 if __name__ == '__main__':
     time_prefix = sys.argv[1]
+    scale = float(sys.argv[2])
 
     cnt = Counter()
     time_train = '%s-train.txt' % time_prefix
@@ -15,7 +16,7 @@ if __name__ == '__main__':
         for line in f:
             line = line.strip().split(' ')
             for i in range(1, len(line)):
-                s += float(line[i]) - float(line[i - 1])
+                s += scale * (float(line[i]) - float(line[i - 1]))
             train_cnt += len(line) - 1
 
     mean_predictor = s / train_cnt
@@ -29,7 +30,7 @@ if __name__ == '__main__':
             line = line.strip().split(' ')
             test_cnt += len(line) - 1
             for i in range(1, len(line)):
-                y = float(line[i]) - float(line[i - 1])
+                y = scale * (float(line[i]) - float(line[i - 1]))
                 mae += abs(y - mean_predictor)
                 rmse += (y - mean_predictor) ** 2
 

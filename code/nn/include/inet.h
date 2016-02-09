@@ -81,7 +81,7 @@ public:
         if (!initialized)
             Setup();
 
-		int max_iter = (long long)cfg::max_epoch * train_data->num_samples / cfg::bptt / cfg::batch_size;
+		long long max_iter = (long long)cfg::max_epoch * train_data->num_samples / cfg::bptt / cfg::batch_size;
     	int init_iter = cfg::iter;
     
     	if (init_iter > 0)
