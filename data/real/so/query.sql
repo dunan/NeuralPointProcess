@@ -51,9 +51,9 @@ CREATE VIEW relevant_badges AS
 
 
 EXPLAIN
-SELECT count(*) AS entries,
+SELECT count(*)               AS entries,
        count(distinct userid) AS num_users,
-       count(distinct name) AS num_badges
+       count(distinct name)   AS num_badges
 FROM badges_count BC3
 WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
     AND EXISTS (SELECT * FROM relevant_users RU2 WHERE RU2.userid = BC3.userid)
@@ -62,9 +62,9 @@ WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
 
 EXPLAIN
 SELECT userid,
-       array_agg(BC3.name) AS BadgeNames,
-       array_agg(BT.id)    AS BadgeIds,
-       array_agg(BC3.date) AS Time
+       array_agg(BC3.name)                     AS BadgeNames,
+       array_agg(BT.id)                        AS EventIds,
+       array_agg(EXTRACT(EPOCH FROM BC3.date)) AS TimeStamp
 FROM badges_count BC3
 JOIN badgeTypes BT ON (BT.badge = BC3.name)
 WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
