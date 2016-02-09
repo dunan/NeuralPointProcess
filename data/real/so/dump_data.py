@@ -29,7 +29,6 @@ def write():
                         continue
 
                     userids.append(userid)
-                    min_t = min(times)
                     event_ids = []
                     for badge in events:
                         if badge not in badge_map:
@@ -39,7 +38,7 @@ def write():
 
                     f_events.write(' '.join(str(x) for x in event_ids) + '\n')
                     # Can change times to something more granular than seconds.
-                    f_time.write(' '.join(str(x - min_t) for x in times) + '\n')
+                    f_time.write(' '.join(str(x) for x in times) + '\n')
 
             with open(output_userids, 'w') as f_userids:
                 f_userids.write('userid\n')
