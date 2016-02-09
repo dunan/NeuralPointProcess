@@ -11,13 +11,15 @@ n_embed=128
 H=128
 bsize=64
 bptt=5
-learning_rate=0.0001
+learning_rate=0.001
 max_iter=4000
 cur_iter=0
 T=24
 w_scale=0.01
 mode=CPU
 net=joint
+lambda=1.0
+loss=exp
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -30,6 +32,8 @@ dev_id=0
 ./build/main \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \
+    -loss $loss \
+    -lambda $lambda \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \

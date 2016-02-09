@@ -9,7 +9,7 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 n_embed=128
 H=128
-bsize=64
+bsize=32
 bptt=8
 learning_rate=0.01
 max_iter=4000
@@ -18,7 +18,7 @@ T=0
 w_scale=0.01
 mode=GPU
 net=joint
-loss=mse
+loss=exp
 lambda=0.14996
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 

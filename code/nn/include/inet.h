@@ -15,6 +15,7 @@
 #include "config.h"
 #include "data_loader.h"
 #include "err_cnt_criterion_layer.h"
+#include "expnll_criterion_layer.h"
 
 template<MatMode mode, typename Dtype>
 class INet

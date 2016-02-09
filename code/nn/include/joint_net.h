@@ -21,6 +21,8 @@ public:
         	this->train_label[fmt::sprintf("mse_%d", i)] = this->g_time_label[i];
         	this->train_label[fmt::sprintf("mae_%d", i)] = this->g_time_label[i];
             this->train_label[fmt::sprintf("err_cnt_%d", i)] = this->g_event_label[i];
+            if (cfg::loss_type == LossType::EXP)
+                this->train_label[fmt::sprintf("expnll_%d", i)] = this->g_time_label[i];
     	}
 	}
 
@@ -33,23 +35,31 @@ public:
 		this->test_label["mae_0"] = this->g_time_label[0];
 		this->test_label["nll_0"] = this->g_event_label[0];
         this->test_label["err_cnt_0"] = this->g_event_label[0];
+        if (cfg::loss_type == LossType::EXP)
+            this->test_label["expnll_0"] = this->g_time_label[0];
 	}
 
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) 
 	{
-		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0;
+		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0, expnll = 0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
             rmse += loss_map[fmt::sprintf("mse_%d", i)];
         	nll += loss_map[fmt::sprintf("nll_%d", i)]; 
             err_cnt += loss_map[fmt::sprintf("err_cnt_%d", i)]; 
+            if (cfg::loss_type == LossType::EXP)
+                expnll += loss_map[fmt::sprintf("expnll_%d", i)];  
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
 		nll /= cfg::bptt * train_data->batch_size;
         err_cnt /= cfg::bptt * train_data->batch_size;
-        std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt) << std::endl; 
+        expnll /= cfg::bptt * cfg::batch_size;
+        std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt);
+        if (cfg::loss_type == LossType::EXP)
+            std::cerr << fmt::sprintf("\texpnll: %.4f", expnll);
+        std::cerr << std::endl;
 	}
 
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) 
@@ -59,7 +69,10 @@ public:
 		mae /= dataset->num_samples;
 		nll /= dataset->num_samples;
         Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
-        std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", mae, rmse, nll, err_cnt) << std::endl;
+        std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", mae, rmse, nll, err_cnt);
+        if (cfg::loss_type == LossType::EXP)
+            std::cerr << fmt::sprintf("\texpnll: %.4f", loss_map["expnll_0"] / dataset->num_samples);
+        std::cerr << std::endl;        
 	}
 
 	virtual void InitParamDict() 
@@ -97,7 +110,9 @@ public:
     	auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
 
     	auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
-    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), cfg::lambda);
+    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
+                                                                 cfg::lambda, 
+                                                                 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
     	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step), PropErr::N);
         auto* err_cnt = new ErrCntCriterionLayer<mode, Dtype>(fmt::sprintf("err_cnt_%d", time_step));
 
@@ -116,6 +131,11 @@ public:
     	gnn.AddEdge(time_out_layer, exp_layer);
     	gnn.AddEdge(exp_layer, mse_criterion);
     	gnn.AddEdge(exp_layer, mae_criterion);
+        if (cfg::loss_type == LossType::EXP)
+        {
+            auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
+            gnn.AddEdge(exp_layer, expnll_criterion); 
+        }
     	
     	gnn.AddEdge(event_output_layer, classnll);
         gnn.AddEdge(event_output_layer, err_cnt); 

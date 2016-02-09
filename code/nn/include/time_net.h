@@ -17,6 +17,8 @@ public:
         	this->train_feat[fmt::sprintf("time_input_%d", i)] = this->g_time_input[i];
         	this->train_label[fmt::sprintf("mse_%d", i)] = this->g_time_label[i];
         	this->train_label[fmt::sprintf("mae_%d", i)] = this->g_time_label[i];
+        	if (cfg::loss_type == LossType::EXP)
+        		this->train_label[fmt::sprintf("expnll_%d", i)] = this->g_time_label[i];
     	}
 	}
 
@@ -26,19 +28,27 @@ public:
 		this->test_feat["time_input_0"] = this->g_time_input[0];
 		this->test_label["mse_0"] = this->g_time_label[0];
 		this->test_label["mae_0"] = this->g_time_label[0];
+		if (cfg::loss_type == LossType::EXP)
+			this->test_label["expnll_0"] = this->g_time_label[0];
 	}
 
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) override
 	{
-		Dtype rmse = 0.0, mae = 0.0;
+		Dtype rmse = 0.0, mae = 0.0, expnll = 0.0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
             rmse += loss_map[fmt::sprintf("mse_%d", i)];  
+            if (cfg::loss_type == LossType::EXP)
+            	expnll += loss_map[fmt::sprintf("expnll_%d", i)];  
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
-		std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse) << std::endl;
+		expnll /= cfg::bptt * cfg::batch_size;
+		std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse);
+		if (cfg::loss_type == LossType::EXP)
+			std::cerr << fmt::sprintf("\texpnll: %.4f", expnll);
+		std::cerr << std::endl;
 	}
 
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
@@ -46,7 +56,10 @@ public:
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
 		rmse = sqrt(rmse / dataset->num_samples);
 		mae /= dataset->num_samples;
-		std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse) << std::endl;
+		std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse);
+		if (cfg::loss_type == LossType::EXP)
+			std::cerr << fmt::sprintf("\texpnll: %.4f", loss_map["expnll_0"] / dataset->num_samples);
+		std::cerr << std::endl;
 	}
 
 	virtual void InitParamDict() override
@@ -74,7 +87,9 @@ public:
 	    auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
 	    auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
     
-    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), cfg::lambda);
+    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
+    															 cfg::lambda, 
+    															 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
     	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step),  PropErr::N);
 
 	    gnn.AddLayer(time_input_layer);
@@ -94,6 +109,12 @@ public:
 
     	gnn.AddEdge(exp_layer, mse_criterion);
     	gnn.AddEdge(exp_layer, mae_criterion);
+
+    	if (cfg::loss_type == LossType::EXP)
+    	{
+    		auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
+    		gnn.AddEdge(exp_layer, expnll_criterion); 
+    	}
 
     	return relu_hidden_layer; 
 	}
