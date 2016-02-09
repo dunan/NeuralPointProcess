@@ -112,6 +112,11 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
     }
 }
 
+Dtype GetEmpiricalVariance(std::vector< std::vector<Dtype> >& raw_time_data)
+{
+    return 0;
+}
+
 inline void LoadDataFromFile()
 {
 	std::vector< std::vector<int> > raw_event_train, raw_event_test;

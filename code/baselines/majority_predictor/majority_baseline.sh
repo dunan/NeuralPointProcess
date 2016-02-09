@@ -3,7 +3,7 @@
 data_root=../../../data
 subfolder=real
 
-task=lastfm
+task=book_order
 
 event_prefix=event
 time_prefix=time

@@ -3,12 +3,12 @@
 data_root=../../../data
 subfolder=real
 
-task=ali
+task=book_order
 
 event_prefix=event
 time_prefix=time
 
-order=2
+order=1
 
 echo 'predicting ' $task 'using order=' $order
 echo '============= event =============='

@@ -102,7 +102,7 @@ public:
 	        {
     	        std::cerr << "testing" << std::endl;
         	    
-                EvaluateDataset(test_data, cfg::save_test, test_loss_map);
+                EvaluateDataset(test_data, true, test_loss_map);
                 PrintTestResults(test_data, test_loss_map);
                 if (cfg::has_eval)
                 {
@@ -129,7 +129,7 @@ public:
         	auto loss_map = net_train.ForwardLabel(train_label);
             if (cfg::bptt > 1)
             {
-                net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+                //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
 
             net_train.BackPropagation();

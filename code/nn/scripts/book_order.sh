@@ -1,16 +1,16 @@
 #!/bin/bash
 
 task=book_order
-f_event=event.txt
-f_time=time.txt
+prefix_event=event
+prefix_time=time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=64
-H=64
+n_embed=128
+H=128
 bsize=64
-bptt=3
+bptt=8
 learning_rate=0.001
 m=0.9
 l2=0.0
@@ -20,6 +20,8 @@ T=0
 w_scale=0.01
 mode=CPU
 net=joint
+loss=mse
+lambda=51.046609
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -30,8 +32,10 @@ fi
 dev_id=0
 
 ./build/main \
-    -event $DATA_ROOT/$f_event \
-    -time $DATA_ROOT/$f_time \
+    -event $DATA_ROOT/$prefix_event \
+    -time $DATA_ROOT/$prefix_time \
+    -loss $loss \
+    -lambda $lambda \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \

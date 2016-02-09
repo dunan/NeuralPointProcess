@@ -11,10 +11,16 @@ enum class NetType
     JOINT = 2
 };
 
+enum class LossType
+{
+    MSE = 0,
+    EXP = 1
+};
+
 struct cfg
 {
     static int dev_id, iter;
-    static unsigned bptt, n_recur_layers;     
+    static unsigned bptt;     
     static unsigned n_hidden; 
     static unsigned n_embed; 
     static unsigned batch_size; 
@@ -23,13 +29,15 @@ struct cfg
     static unsigned report_interval; 
     static unsigned save_interval; 
     static NetType net_type;
+    static LossType loss_type;
+    static Dtype lambda;
     static Dtype lr;
     static Dtype l2_penalty; 
     static Dtype momentum; 
     static MatMode device_type;
     static Dtype w_scale;
     static Dtype T;
-    static bool save_eval, save_test, has_eval, multidim_time;
+    static bool save_eval, has_eval, multidim_time;
     static const char *f_time_prefix, *f_event_prefix, *save_dir;
     
     static void LoadParams(const int argc, const char** argv)
@@ -58,10 +66,17 @@ struct cfg
                 else throw "unknown net type"; 
                 std::cerr << "net_type = " << argv[i + 1] << std::endl;
             }
+            if (strcmp(argv[i], "-loss") == 0)
+            {
+                if (strcmp(argv[i + 1], "mse") == 0)
+                    loss_type = LossType::MSE;
+                else if (strcmp(argv[i + 1], "exp") == 0)
+                    loss_type = LossType::EXP;
+                else throw "unknown net type"; 
+                std::cerr << "loss_type = " << argv[i + 1] << std::endl;
+            }
             if (strcmp(argv[i], "-save_eval") == 0)
                 save_eval = (bool)atoi(argv[i + 1]); 
-            if (strcmp(argv[i], "-save_test") == 0)
-                save_test = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-eval") == 0)
                 has_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-mt") == 0)
@@ -72,6 +87,8 @@ struct cfg
 		        lr = atof(argv[i + 1]);
             if (strcmp(argv[i], "-T") == 0)
                 T = atof(argv[i + 1]);
+            if (strcmp(argv[i], "-lambda") == 0)
+                lambda = atof(argv[i + 1]);
             if (strcmp(argv[i], "-bptt") == 0)
                 bptt = atoi(argv[i + 1]);                                    
             if (strcmp(argv[i], "-cur_iter") == 0)
@@ -100,8 +117,9 @@ struct cfg
     			save_dir = argv[i + 1];
             if (strcmp(argv[i], "-device") == 0)
     			dev_id = atoi(argv[i + 1]);
-        }
-	
+        }	
+
+        std::cerr << "lambda = " << lambda << std::endl;
         std::cerr << "multidim_time = " << multidim_time << std::endl;
         std::cerr << "bptt = " << bptt << std::endl;
 	    std::cerr << "n_hidden = " << n_hidden << std::endl;
@@ -112,7 +130,6 @@ struct cfg
     	std::cerr << "test_interval = " << test_interval << std::endl;
     	std::cerr << "report_interval = " << report_interval << std::endl;
     	std::cerr << "save_interval = " << save_interval << std::endl;
-        std::cerr << "save_test = " << save_test << std::endl;
         std::cerr << "save_eval = " << save_eval << std::endl;
     	std::cerr << "lr = " << lr << std::endl;
         std::cerr << "w_scale = " << w_scale << std::endl;
@@ -126,7 +143,6 @@ struct cfg
 int cfg::dev_id = 0;
 int cfg::iter = 0;
 unsigned cfg::bptt = 3;
-unsigned cfg::n_recur_layers = 1;
 
 unsigned cfg::n_hidden = 256;
 unsigned cfg::n_embed = 128;
@@ -135,6 +151,7 @@ unsigned cfg::max_epoch = 200;
 unsigned cfg::test_interval = 10000;
 unsigned cfg::report_interval = 100;
 unsigned cfg::save_interval = 50000;
+Dtype cfg::lambda = 1.0;
 Dtype cfg::T = 0;
 Dtype cfg::lr = 0.0005;
 Dtype cfg::l2_penalty = 0;
@@ -142,12 +159,12 @@ Dtype cfg::momentum = 0;
 Dtype cfg::w_scale = 0.01;
 MatMode cfg::device_type = GPU;
 bool cfg::save_eval = false;
-bool cfg::save_test = false;
 bool cfg::has_eval = false;
 bool cfg::multidim_time = false;
 const char* cfg::f_time_prefix = nullptr;
 const char* cfg::f_event_prefix = nullptr;
 const char* cfg::save_dir = "./saved";
 NetType cfg::net_type = NetType::TIME;
+LossType cfg::loss_type = LossType::MSE;
 
 #endif

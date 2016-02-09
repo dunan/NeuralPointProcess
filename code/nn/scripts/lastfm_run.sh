@@ -17,7 +17,9 @@ cur_iter=0
 T=0
 w_scale=0.01
 mode=GPU
-net=event
+net=joint
+loss=mse
+lambda=0.14996
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -30,6 +32,8 @@ dev_id=0
 ./build/main \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \
+    -loss $loss \
+    -lambda $lambda \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
