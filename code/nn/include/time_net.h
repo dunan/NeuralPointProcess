@@ -85,35 +85,25 @@ public:
     	auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
 
 	    auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
-	    auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+	    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
     
-    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
-    															 cfg::lambda, 
+    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step),  
     															 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
     	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step),  PropErr::N);
-
-	    gnn.AddLayer(time_input_layer);
-    	gnn.AddLayer(hidden_layer);
-    	gnn.AddLayer(relu_hidden_layer);
-    	gnn.AddLayer(time_out_layer);
-    	gnn.AddLayer(exp_layer);
-    
-    	gnn.AddLayer(mse_criterion);
-    	gnn.AddLayer(mae_criterion);
 
     	gnn.AddEdge(time_input_layer, hidden_layer);
     	gnn.AddEdge(last_hidden_layer, hidden_layer);
     	gnn.AddEdge(hidden_layer, relu_hidden_layer);
     	gnn.AddEdge(relu_hidden_layer, time_out_layer);
-    	gnn.AddEdge(time_out_layer, exp_layer);
+    	//gnn.AddEdge(time_out_layer, exp_layer);
 
-    	gnn.AddEdge(exp_layer, mse_criterion);
-    	gnn.AddEdge(exp_layer, mae_criterion);
+    	gnn.AddEdge(time_out_layer, mse_criterion);
+    	gnn.AddEdge(time_out_layer, mae_criterion);
 
     	if (cfg::loss_type == LossType::EXP)
     	{
     		auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
-    		gnn.AddEdge(exp_layer, expnll_criterion); 
+    		gnn.AddEdge(time_out_layer, expnll_criterion); 
     	}
 
     	return relu_hidden_layer; 
@@ -121,7 +111,7 @@ public:
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{
-		this->net_test.GetDenseNodeState("expact_0", buf);		
+		this->net_test.GetDenseNodeState("time_out_0", buf);		
 		buf2.CopyFrom(this->g_time_label[0]->node_states->DenseDerived());
         for (size_t i = 0; i < buf.rows; ++i)
             fprintf(fid, "%.6f %.6f\n",  buf.data[i], buf2.data[i]);

@@ -107,7 +107,7 @@ public:
     	auto* event_output_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("event_out_%d", time_step), param_dict["w_event_out"], GraphAtt::NODE); 
 
     	auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
-    	auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+    	//auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
 
     	auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
     	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
@@ -128,13 +128,13 @@ public:
     	gnn.AddEdge(relu_hidden_layer, event_output_layer);
     	gnn.AddEdge(relu_hidden_layer, time_out_layer);
     
-    	gnn.AddEdge(time_out_layer, exp_layer);
-    	gnn.AddEdge(exp_layer, mse_criterion);
-    	gnn.AddEdge(exp_layer, mae_criterion);
+    	//gnn.AddEdge(time_out_layer, exp_layer);
+    	gnn.AddEdge(time_out_layer, mse_criterion);
+    	gnn.AddEdge(time_out_layer, mae_criterion);
         if (cfg::loss_type == LossType::EXP)
         {
             auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
-            gnn.AddEdge(exp_layer, expnll_criterion); 
+            gnn.AddEdge(time_out_layer, expnll_criterion); 
         }
     	
     	gnn.AddEdge(event_output_layer, classnll);
@@ -145,7 +145,7 @@ public:
 
     virtual void WriteTestBatch(FILE* fid) override
     {
-        this->net_test.GetDenseNodeState("expact_0", time_pred);
+        this->net_test.GetDenseNodeState("time_out_0", time_pred);
         this->net_test.GetDenseNodeState("event_out_0", event_pred);
         for (size_t i = 0; i < time_pred.rows; ++i)
         {

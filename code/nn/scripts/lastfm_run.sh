@@ -13,13 +13,13 @@ bsize=64
 bptt=8
 learning_rate=0.01
 max_iter=4000
-cur_iter=1
+cur_iter=0
 T=0
 w_scale=0.01
 mode=GPU
 net=joint
 loss=mse
-lambda=0.14996
+lambda=0.022488192683
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];

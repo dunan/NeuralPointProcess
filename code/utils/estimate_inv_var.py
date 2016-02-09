@@ -11,4 +11,4 @@ if __name__ == '__main__':
             for i in range(1, len(line)):
                 seq.append(float(line[i]) - float(line[i - 1]))
 
-    print 1.0 / np.std(seq)
+    print 1.0 / np.var(seq)
