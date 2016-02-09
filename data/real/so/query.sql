@@ -60,14 +60,16 @@ WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
     AND BC3.date BETWEEN '2012-01-01' AND '2014-01-01';
 
 
-EXPLAIN
-SELECT userid,
-       array_agg(BC3.name)                     AS BadgeNames,
-       array_agg(BT.id)                        AS EventIds,
-       array_agg(EXTRACT(EPOCH FROM BC3.date)) AS TimeStamp
-FROM badges_count BC3
-JOIN badgeTypes BT ON (BT.badge = BC3.name)
-WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
-    AND EXISTS (SELECT * FROM relevant_users RU2 WHERE RU2.userid = BC3.userid)
-    AND BC3.date BETWEEN '2012-01-01' AND '2014-01-01'
-GROUP BY BC3.userid;
+DROP TABLE IF EXISTS so_data;
+CREATE TABLE so_data AS (
+    SELECT userid,
+           array_agg(BC3.name)                     AS BadgeNames,
+           array_agg(BT.id)                        AS EventIds,
+           array_agg(EXTRACT(EPOCH FROM BC3.date)) AS TimeStamp
+    FROM badges_count BC3
+    JOIN badgeTypes BT ON (BT.badge = BC3.name)
+    WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
+        AND EXISTS (SELECT * FROM relevant_users RU2 WHERE RU2.userid = BC3.userid)
+        AND BC3.date BETWEEN '2012-01-01' AND '2014-01-01'
+    GROUP BY BC3.userid
+);
