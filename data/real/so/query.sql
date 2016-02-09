@@ -71,4 +71,3 @@ WHERE EXISTS (SELECT * FROM relevant_badges RB1 WHERE RB1.name = BC3.name)
     AND EXISTS (SELECT * FROM relevant_users RU2 WHERE RU2.userid = BC3.userid)
     AND BC3.date BETWEEN '2012-01-01' AND '2014-01-01'
 GROUP BY BC3.userid;
-
