@@ -7,11 +7,12 @@ prefix_time=time_split_1000
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
+gru=1
 n_embed=64
 H=64
-h2=64
+h2=0
 bsize=64
-bptt=8
+bptt=3
 learning_rate=0.01
 max_iter=4000
 cur_iter=0
@@ -31,6 +32,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -gru $gru \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \
     -loss $loss \

@@ -43,7 +43,7 @@ struct cfg
     static Dtype w_scale;
     static Dtype T;
     static Dtype time_scale;
-    static bool save_eval, has_eval, unix_time;
+    static bool save_eval, has_eval, unix_time, gru;
     static const char *f_time_prefix, *f_event_prefix, *save_dir;
     static std::string unix_str;
     
@@ -96,6 +96,8 @@ struct cfg
                 has_eval = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-unix") == 0)
                 unix_time = (bool)atoi(argv[i + 1]); 
+            if (strcmp(argv[i], "-gru") == 0)
+                gru = (bool)atoi(argv[i + 1]); 
             if (strcmp(argv[i], "-unix_str") == 0)
                 unix_str = std::string(argv[i + 1]); 
 		    if (strcmp(argv[i], "-event") == 0)
@@ -154,6 +156,7 @@ struct cfg
             std::cerr << "unix str: [" << unix_str << "] feature dimension of time: " << time_dim << std::endl;
         }
 
+        std::cerr << "gru = " << gru << std::endl;
         std::cerr << "n_h2 = " << n_h2 << std::endl;
         std::cerr << "time scale = " << time_scale << std::endl;
         std::cerr << "lambda = " << lambda << std::endl;
@@ -177,6 +180,7 @@ struct cfg
     }    
 };
 
+bool cfg::gru = false;
 unsigned cfg::n_h2 = 0;
 int cfg::dev_id = 0;
 int cfg::iter = 0;

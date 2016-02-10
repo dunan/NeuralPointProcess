@@ -17,6 +17,10 @@
 #include "err_cnt_criterion_layer.h"
 #include "expnll_criterion_layer.h"
 #include "batch_norm_param.h"
+#include "sigmoid_layer.h"
+#include "elewise_mul_layer.h"
+#include "const_trans_layer.h"
+#include "gather_layer.h"
 
 template<MatMode mode, typename Dtype>
 class INet
