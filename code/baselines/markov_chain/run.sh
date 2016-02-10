@@ -3,7 +3,7 @@
 data_root=../../../data
 subfolder=real
 
-task=mimic2
+task=so
 
 event_prefix=event
 time_prefix=time
