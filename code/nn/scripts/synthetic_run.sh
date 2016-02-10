@@ -1,24 +1,25 @@
 #!/bin/bash
 
-task=exp
+task=rayleigh
 prefix_event=event
 prefix_time=time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-gru=1
+hist=0
+gru=0
 n_embed=16
-H=32
-bsize=64
+H=128
+bsize=256
 bptt=3
-learning_rate=0.001
+learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
-net=joint
+net=time
 lambda=1.0
 loss=mse
 save_dir="$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize"
@@ -31,6 +32,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -history $hist \
     -gru $gru \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \

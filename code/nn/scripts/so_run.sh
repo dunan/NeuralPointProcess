@@ -26,7 +26,7 @@ test_top=-1
 time_scale=0.00001
 lambda=0.009175195
 unix_str=wHMmd
-save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
+save_dir=$RESULT_ROOT/$net-$task-gru-$gru-hist-$hist-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
 then
