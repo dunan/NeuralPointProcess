@@ -132,7 +132,7 @@ public:
                                       gnn, last_hidden_layer, event_feat, time_feat,
                                       param_dict["w_h2h"], param_dict["w_event2h"], param_dict["w_time2h"]);        
 
-        auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+        auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("recurrent_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
         gnn.AddEdge(hidden_layer, relu_hidden_layer);
 
         return relu_hidden_layer;
@@ -166,10 +166,11 @@ public:
 
 
         // local hidden_candidate = nn.Tanh()(nn.CAddTable()({p1,p2}))
-        auto* hidden_candidate = AddRecur(fmt::sprintf("hidden_candidate_%d", time_step), 
+        auto* hidden_candidate_linear = AddRecur(fmt::sprintf("hidden_candidate_linear%d", time_step), 
                                           gnn, gated_hidden, event_feat, time_feat,
                                           param_dict["w_h2h"], param_dict["w_event2h"], param_dict["w_time2h"]);
-
+        auto* hidden_candidate = new ReLULayer<mode, Dtype>(fmt::sprintf("hidden_candidate_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+        gnn.AddEdge(hidden_candidate_linear, hidden_candidate);
 
         // local zh = nn.CMulTable()({update_gate, hidden_candidate})
         auto* zh = new PairMulLayer<mode, Dtype>(fmt::sprintf("zh_%d", time_step), GraphAtt::NODE);
@@ -187,7 +188,7 @@ public:
         gnn.AddEdge(last_hidden_layer, zhm1);
 
         // local next_h = nn.CAddTable()({zh, zhm1})
-        auto* next_h = new NodeGatherLayer<mode, Dtype>(fmt::sprintf("next_h_%d", time_step));
+        auto* next_h = new NodeGatherLayer<mode, Dtype>(fmt::sprintf("recurrent_hidden_%d", time_step));
         gnn.AddEdge(zh, next_h);
         gnn.AddEdge(zhm1, next_h);
 

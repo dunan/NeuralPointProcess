@@ -75,7 +75,7 @@ public:
             if (save_prediction)
                 WriteTestBatch(fid);
             if (cfg::bptt > 1)
-                net_test.GetDenseNodeState("relu_hidden_0", last_hidden_test);            
+                net_test.GetDenseNodeState("recurrent_hidden_0", last_hidden_test);            
         }
         if (save_prediction)
             fclose(fid);

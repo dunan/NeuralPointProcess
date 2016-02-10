@@ -9,9 +9,10 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 n_embed=128
 H=256
+h2=0
 bsize=64
-bptt=2
-learning_rate=0.001
+bptt=8
+learning_rate=0.01
 max_iter=4000
 cur_iter=0
 T=0
@@ -35,6 +36,7 @@ dev_id=0
 ./build/main \
     -unix_str $unix_str \
     -test_top $test_top \
+    -h2 $h2 \
     -unix 1 \
     -t_scale $time_scale \
     -event $DATA_ROOT/$prefix_event \

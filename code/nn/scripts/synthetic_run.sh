@@ -4,11 +4,12 @@ task=mixture-HMM
 prefix_event=event-temporal-3
 prefix_time=time-temporal-3
 
-input_dir="${DATA_ROOT:-$HOME/Research/NeuralPointProcess/data/synthetic}/$task"
-RESULT_ROOT=${RESULT_ROOT:-$HOME/scratch/results/NeuralPointProcess}
+DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
+RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=128
-H=128
+gru=0
+n_embed=32
+H=32
 bsize=64
 bptt=5
 learning_rate=0.001
@@ -30,6 +31,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -gru $gru \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \
     -loss $loss \
