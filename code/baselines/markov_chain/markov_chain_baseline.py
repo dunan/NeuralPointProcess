@@ -8,7 +8,7 @@ def train_model(filename, order):
     with open(filename, 'r') as f:
         for line in f:
             line = line.strip().split(' ')
-            if len(line) <= order:
+            if len(line) <= order or len(line) <= 2:
                 continue
             for w in line:
                 label_cnt[w] += 1
@@ -39,6 +39,8 @@ if __name__ == '__main__':
            
             total += len(line) - 1
             for i in range(1, order):
+                if i >= len(line):
+                    break
                 if top_pred != line[i]:
                     err_cnt += 1
 

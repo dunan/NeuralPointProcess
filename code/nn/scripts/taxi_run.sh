@@ -7,8 +7,10 @@ prefix_time=pickup_time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
+hist=1
+gru=1
 n_embed=128
-H=256
+H=128
 h2=0
 bsize=64
 bptt=8
@@ -34,6 +36,8 @@ fi
 dev_id=0
 
 ./build/main \
+    -history $hist \
+    -gru $gru \
     -unix_str $unix_str \
     -test_top $test_top \
     -h2 $h2 \

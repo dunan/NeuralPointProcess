@@ -133,9 +133,9 @@ public:
         
         	net_train.ForwardData(train_feat, TRAIN);
         	auto loss_map = net_train.ForwardLabel(train_label);
-            if (cfg::bptt > 1)
+            if (cfg::bptt > 1 && cfg::use_history)
             {
-                //net_train.GetDenseNodeState(fmt::sprintf("relu_hidden_%d", cfg::bptt - 1), last_hidden_train);
+                net_train.GetDenseNodeState(fmt::sprintf("recurrent_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
 
             net_train.BackPropagation();

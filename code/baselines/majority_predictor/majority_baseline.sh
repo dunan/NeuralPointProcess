@@ -3,10 +3,10 @@
 data_root=../../../data
 subfolder=real
 
-task=lastfm
+task=mimic2
 
-event_prefix=event_split_1000
-time_prefix=time_split_1000
+event_prefix=event
+time_prefix=time
 
 echo 'predicting ' $task
 echo '============= event =============='

@@ -99,6 +99,9 @@ public:
         }
         this->param_dict["w_event_out"] = new LinearParam<mode, Dtype>("w_event_out", hidden_size, train_data->num_events, 0, cfg::w_scale);
     	this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", hidden_size, 1, 0, cfg::w_scale);
+
+        //this->param_dict["w_time_i2o"] = new LinearParam<mode, Dtype>("w_time_i2o", cfg::time_dim, 1, 0, cfg::w_scale);
+        //this->param_dict["w_event_i2o"] = new LinearParam<mode, Dtype>("w_event_i2o", cfg::n_embed, train_data->num_events, 0, cfg::w_scale);
 	}
 
     virtual ILayer<mode, Dtype>* AddRecur(std::string name, 
@@ -216,18 +219,6 @@ public:
             recurrent_output = AddGRULayer(time_step, gnn, last_hidden_layer, relu_embed_layer, time_input_layer, param_dict);
         } else
             recurrent_output = AddRNNLayer(time_step, gnn, last_hidden_layer, relu_embed_layer, time_input_layer, param_dict);
-
-    	auto* event_output_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("event_out_%d", time_step), param_dict["w_event_out"], GraphAtt::NODE); 
-
-    	auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
-    	//auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-
-    	auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
-    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
-                                                                 cfg::lambda, 
-                                                                 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
-    	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step), PropErr::N);
-        auto* err_cnt = new ErrCntCriterionLayer<mode, Dtype>(fmt::sprintf("err_cnt_%d", time_step));
     	
         auto* top_hidden = recurrent_output;
         if (cfg::n_h2)
@@ -239,9 +230,27 @@ public:
             top_hidden = relu_2;
         } 
 
+        auto* event_output_layer = new NodeLayer<mode, Dtype>(fmt::sprintf("event_out_%d", time_step)); 
+        event_output_layer->AddParam(top_hidden->name, param_dict["w_event_out"], GraphAtt::NODE);
+        //event_output_layer->AddParam(relu_embed_layer->name, param_dict["w_event_i2o"], GraphAtt::NODE);
+        //gnn.AddEdge(relu_embed_layer, event_output_layer);
         gnn.AddEdge(top_hidden, event_output_layer);
-        gnn.AddEdge(top_hidden, time_out_layer);    
-    
+
+        auto* time_out_layer = new NodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step));
+        time_out_layer->AddParam(top_hidden->name, param_dict["w_time_out"], GraphAtt::NODE);
+        //time_out_layer->AddParam(time_input_layer->name, param_dict["w_time_i2o"], GraphAtt::NODE);
+        //gnn.AddEdge(time_input_layer, time_out_layer);
+        gnn.AddEdge(top_hidden, time_out_layer);
+
+        //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+
+        auto* classnll = new ClassNLLCriterionLayer<mode, Dtype>(fmt::sprintf("nll_%d", time_step), true);
+        auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step), 
+                                                                 cfg::lambda, 
+                                                                 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
+        auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step), PropErr::N);
+        auto* err_cnt = new ErrCntCriterionLayer<mode, Dtype>(fmt::sprintf("err_cnt_%d", time_step));
+
     	//gnn.AddEdge(time_out_layer, exp_layer);
     	gnn.AddEdge(time_out_layer, mse_criterion);
     	gnn.AddEdge(time_out_layer, mae_criterion);

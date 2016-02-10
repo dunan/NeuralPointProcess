@@ -85,7 +85,7 @@ public:
     	auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("recurrent_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
 
 	    auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
-	    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+	    auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
     
     	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step),  
     															 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
@@ -95,15 +95,15 @@ public:
     	gnn.AddEdge(last_hidden_layer, hidden_layer);
     	gnn.AddEdge(hidden_layer, relu_hidden_layer);
     	gnn.AddEdge(relu_hidden_layer, time_out_layer);
-    	//gnn.AddEdge(time_out_layer, exp_layer);
+    	gnn.AddEdge(time_out_layer, exp_layer);
 
-    	gnn.AddEdge(time_out_layer, mse_criterion);
-    	gnn.AddEdge(time_out_layer, mae_criterion);
+    	gnn.AddEdge(exp_layer, mse_criterion);
+    	gnn.AddEdge(exp_layer, mae_criterion);
 
     	if (cfg::loss_type == LossType::EXP)
     	{
     		auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
-    		gnn.AddEdge(time_out_layer, expnll_criterion); 
+    		gnn.AddEdge(exp_layer, expnll_criterion); 
     	}
 
     	return relu_hidden_layer; 

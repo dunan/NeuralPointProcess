@@ -7,12 +7,14 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=32
+hist=1
+gru=1
+n_embed=64
 H=64
 bsize=64
-bptt=1
-learning_rate=0.0001
-max_iter=4000000
+bptt=2
+learning_rate=0.001
+max_iter=400000
 cur_iter=0
 T=0
 w_scale=0.01
@@ -31,6 +33,8 @@ fi
 dev_id=0
 
 ./build/main \
+    -history $hist \
+    -gru $gru \
     -t_scale $time_scale \
     -lambda $lambda \
     -loss $loss \
@@ -44,6 +48,7 @@ dev_id=0
     -embed $n_embed \
     -save_eval 0 \
     -save_test 1 \
+    -l2 0.01 \
     -T $T \
     -m 0.9 \
     -b $bsize \
