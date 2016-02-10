@@ -79,10 +79,17 @@ public:
 	{
 		this->param_dict["w_embed"] = new LinearParam<mode, Dtype>("w_embed",  train_data->num_events, cfg::n_embed, 0, cfg::w_scale);
     	this->param_dict["w_event2h"] = new LinearParam<mode, Dtype>("w_event2h", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
-    	this->param_dict["w_event_out"] = new LinearParam<mode, Dtype>("w_event_out", cfg::n_hidden, train_data->num_events, 0, cfg::w_scale);
 		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_h2h"] = new LinearParam<mode, Dtype>("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-    	this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", cfg::n_hidden, 1, 0, cfg::w_scale);
+
+        unsigned hidden_size = cfg::n_hidden;
+        if (cfg::n_h2)
+        {
+            hidden_size = cfg::n_h2;
+            this->param_dict["w_hidden2"] = new LinearParam<mode, Dtype>("w_hidden2", cfg::n_hidden, cfg::n_h2, 0, cfg::w_scale);
+        }
+        this->param_dict["w_event_out"] = new LinearParam<mode, Dtype>("w_event_out", hidden_size, train_data->num_events, 0, cfg::w_scale);
+    	this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", hidden_size, 1, 0, cfg::w_scale);
 	}
 
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
@@ -125,8 +132,18 @@ public:
     
     	gnn.AddEdge(hidden_layer, relu_hidden_layer);
     	
-    	gnn.AddEdge(relu_hidden_layer, event_output_layer);
-    	gnn.AddEdge(relu_hidden_layer, time_out_layer);
+        auto* top_hidden = relu_hidden_layer;
+        if (cfg::n_h2)
+        {
+            auto* hidden_2 = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("hidden_2_%d", time_step), param_dict["w_hidden2"], GraphAtt::NODE);
+            gnn.AddEdge(relu_hidden_layer, hidden_2);
+            auto* relu_2 = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_h2_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
+            gnn.AddEdge(hidden_2, relu_2);
+            top_hidden = relu_2;
+        } 
+
+        gnn.AddEdge(top_hidden, event_output_layer);
+        gnn.AddEdge(top_hidden, time_out_layer);    
     
     	//gnn.AddEdge(time_out_layer, exp_layer);
     	gnn.AddEdge(time_out_layer, mse_criterion);

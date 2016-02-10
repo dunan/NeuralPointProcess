@@ -25,6 +25,7 @@ struct cfg
     static unsigned bptt;     
     static unsigned n_hidden; 
     static unsigned n_embed; 
+    static unsigned n_h2;
     static unsigned batch_size; 
     static unsigned max_epoch; 
     static unsigned test_interval; 
@@ -119,6 +120,8 @@ struct cfg
                 test_top = atoi(argv[i + 1]);             
 		    if (strcmp(argv[i], "-b") == 0)
     			batch_size = atoi(argv[i + 1]);
+            if (strcmp(argv[i], "-h2") == 0)
+                n_h2 = atoi(argv[i + 1]);
     		if (strcmp(argv[i], "-maxe") == 0)
 	       		max_epoch = atoi(argv[i + 1]);
 		    if (strcmp(argv[i], "-int_test") == 0)
@@ -151,6 +154,7 @@ struct cfg
             std::cerr << "unix str: [" << unix_str << "] feature dimension of time: " << time_dim << std::endl;
         }
 
+        std::cerr << "n_h2 = " << n_h2 << std::endl;
         std::cerr << "time scale = " << time_scale << std::endl;
         std::cerr << "lambda = " << lambda << std::endl;
         std::cerr << "unix_time = " << unix_time << std::endl;
@@ -173,6 +177,7 @@ struct cfg
     }    
 };
 
+unsigned cfg::n_h2 = 0;
 int cfg::dev_id = 0;
 int cfg::iter = 0;
 unsigned cfg::bptt = 3;

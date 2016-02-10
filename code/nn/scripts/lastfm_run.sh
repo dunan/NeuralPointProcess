@@ -7,10 +7,11 @@ prefix_time=time_split_1000
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=128
-H=128
+n_embed=64
+H=64
+h2=64
 bsize=64
-bptt=4
+bptt=8
 learning_rate=0.01
 max_iter=4000
 cur_iter=0
@@ -34,6 +35,7 @@ dev_id=0
     -time $DATA_ROOT/$prefix_time \
     -loss $loss \
     -lambda $lambda \
+    -h2 $h2 \
     -lr $learning_rate \
     -device $dev_id \
     -maxe $max_iter \
