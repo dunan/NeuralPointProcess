@@ -19,7 +19,7 @@ w_scale=0.01
 mode=CPU
 net=joint
 lambda=1.0
-loss=exp
+loss=mse
 save_dir="$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize"
 
 if [ ! -e $save_dir ];

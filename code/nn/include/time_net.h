@@ -56,7 +56,7 @@ public:
 		Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
 		rmse = sqrt(rmse / dataset->num_samples);
 		mae /= dataset->num_samples;
-		std::cerr << fmt::sprintf("test mae: %.4f\t test rmse: %.4f", mae, rmse);
+		std::cerr << fmt::sprintf("test_mae: %.4f\t test_rmse: %.4f", mae, rmse);
 		if (cfg::loss_type == LossType::EXP)
 			std::cerr << fmt::sprintf("\texpnll: %.4f", loss_map["expnll_0"] / dataset->num_samples);
 		std::cerr << std::endl;

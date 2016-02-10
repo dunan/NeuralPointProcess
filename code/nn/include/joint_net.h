@@ -56,7 +56,7 @@ public:
 		nll /= cfg::bptt * train_data->batch_size;
         err_cnt /= cfg::bptt * train_data->batch_size;
         expnll /= cfg::bptt * cfg::batch_size;
-        std::cerr << fmt::sprintf("train iter=%d\ttime mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt);
+        std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f\tnll: %.4f\terr_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt);
         if (cfg::loss_type == LossType::EXP)
             std::cerr << fmt::sprintf("\texpnll: %.4f", expnll);
         std::cerr << std::endl;
@@ -69,7 +69,7 @@ public:
 		mae /= dataset->num_samples;
 		nll /= dataset->num_samples;
         Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
-        std::cerr << fmt::sprintf("time mae: %.4f\t time rmse: %.4f\t event nll: %.4f\tevent err_rate: %.4f", mae, rmse, nll, err_cnt);
+        std::cerr << fmt::sprintf("test_mae: %.4f\ttest_rmse: %.4f\ttest_nll: %.4f\ttest_err_rate: %.4f", mae, rmse, nll, err_cnt);
         if (cfg::loss_type == LossType::EXP)
             std::cerr << fmt::sprintf("\texpnll: %.4f", loss_map["expnll_0"] / dataset->num_samples);
         std::cerr << std::endl;        

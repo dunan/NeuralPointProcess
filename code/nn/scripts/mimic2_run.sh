@@ -7,18 +7,20 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-n_embed=128
+n_embed=32
 H=64
 bsize=64
-bptt=2
+bptt=1
 learning_rate=0.0001
 max_iter=4000000
 cur_iter=0
-test_pct=0.1
 T=0
 w_scale=0.01
 mode=CPU
 net=joint
+loss=mse
+lambda=1.32337245
+time_scale=0.1
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
@@ -29,7 +31,9 @@ fi
 dev_id=0
 
 ./build/main \
-    -test_pct $test_pct \
+    -t_scale $time_scale \
+    -lambda $lambda \
+    -loss $loss \
     -event $DATA_ROOT/$prefix_event \
     -time $DATA_ROOT/$prefix_time \
     -lr $learning_rate \

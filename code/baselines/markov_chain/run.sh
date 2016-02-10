@@ -3,12 +3,12 @@
 data_root=../../../data
 subfolder=real
 
-task=taxi
+task=lastfm
 
-event_prefix=pickup_events
-time_prefix=pickup_time
+event_prefix=event_split_1000
+time_prefix=time_split_1000
 
-order=3
+order=1
 
 echo 'predicting ' $task 'using order=' $order
 echo '============= event =============='

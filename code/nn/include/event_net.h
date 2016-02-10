@@ -38,14 +38,14 @@ public:
         }
         nll /= cfg::bptt * train_data->batch_size;
         err_cnt /= cfg::bptt * train_data->batch_size;
-        std::cerr << fmt::sprintf("train iter=%d\tevent nll: %.4f\tevent err_rate: %.4f", cfg::iter, nll, err_cnt) << std::endl; 
+        std::cerr << fmt::sprintf("train iter=%d\tnll: %.4f\terr_rate: %.4f", cfg::iter, nll, err_cnt) << std::endl; 
 	}
 
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
 	{
 		Dtype nll = loss_map["nll_0"] / dataset->num_samples;
 		Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
-        std::cerr << fmt::sprintf("event nll: %.4f\tevent err_rate: %.4f", nll, err_cnt) << std::endl;
+        std::cerr << fmt::sprintf("test_nll: %.4f\ttest_err_rate: %.4f", nll, err_cnt) << std::endl;
 	}
 
 	virtual void InitParamDict() override

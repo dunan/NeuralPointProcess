@@ -1,8 +1,8 @@
 #!/bin/bash
 
 task=lastfm
-prefix_event=event
-prefix_time=time
+prefix_event=event_split_1000
+prefix_time=time_split_1000
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -10,16 +10,16 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 n_embed=128
 H=128
 bsize=64
-bptt=8
+bptt=4
 learning_rate=0.01
 max_iter=4000
 cur_iter=0
 T=0
 w_scale=0.01
-mode=GPU
+mode=CPU
 net=joint
 loss=mse
-lambda=0.022488192683
+lambda=0.690150253058
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
