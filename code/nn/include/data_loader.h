@@ -292,8 +292,7 @@ public:
 
     virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) = 0;
 
-    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;
-    DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;
+    SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;    
 };
 
 template<MatMode mode>
@@ -321,18 +320,78 @@ public:
         feat.CopyFrom(this->time_feat_cpu);
         label.CopyFrom(this->time_label_cpu);
     }
+
+    DenseMat<CPU, Dtype> time_feat_cpu, time_label_cpu;
 };
 
 template<MatMode mode>
-class MultiTimeLoader : public IEventTimeLoader<mode>
+class UnixTimeLoader : public IEventTimeLoader<mode>
 {
 public:
-    MultiTimeLoader() : IEventTimeLoader<mode>() {}
+    UnixTimeLoader() : IEventTimeLoader<mode>() {}
 
     virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
     {
-        assert(false);
+        g_feat->graph->Resize(1, cur_batch_size);
+        g_label->graph->Resize(1, cur_batch_size);
+        auto& feat = g_feat->node_states->SparseDerived();
+        auto& label = g_label->node_states->DenseDerived();
+
+        time_feat_cpu.Resize(cur_batch_size, cfg::time_dim);
+        time_label_cpu.Resize(cur_batch_size, 1);
+
+        time_feat_cpu.ResizeSp(cfg::unix_str.size() * cur_batch_size, cur_batch_size + 1);
+
+        for (unsigned i = 0; i < cur_batch_size; ++i)
+        {
+            time_t tt = (time_t)d->time_sequences[d->cursors[i].first][d->cursors[i].second + step];            
+            struct tm *ptm = localtime(&tt);
+
+            time_feat_cpu.data->ptr[i] = i * cfg::unix_str.size();
+
+            int cur_dim = 0, col;
+            for (size_t j = 0; j < cfg::unix_str.size(); ++j)
+            {
+                switch (cfg::unix_str[j])
+                {
+                    case 'y':
+                        col = ptm->tm_year;
+                        break;
+                    case 'm':
+                        col = ptm->tm_mon;
+                        break;
+                    case 'd':
+                        col = ptm->tm_mday - 1;
+                        break;
+                    case 'w':
+                        col = ptm->tm_wday;
+                        break;
+                    case 'H':
+                        col = ptm->tm_hour;
+                        break;
+                    case 'M':
+                        col = ptm->tm_min;
+                        break;
+                    default:                        
+                        assert(false);
+                        break;
+                }
+                time_feat_cpu.data->col_idx[i * cfg::unix_str.size() + j] = col + cur_dim;
+                time_feat_cpu.data->val[i * cfg::unix_str.size() + j] = 1.0;
+                cur_dim += cfg::field_dim[cfg::unix_str[j]]; 
+            }
+
+            time_label_cpu.data[i] = d->time_label_sequences[d->cursors[i].first][d->cursors[i].second + step];   
+        }
+
+        time_feat_cpu.data->ptr[cur_batch_size] = cfg::unix_str.size() * cur_batch_size;
+
+        feat.CopyFrom(this->time_feat_cpu);
+        label.CopyFrom(this->time_label_cpu);
     }
+
+    DenseMat<CPU, Dtype> time_label_cpu;
+    SparseMat<CPU, Dtype> time_feat_cpu;
 };
 
 

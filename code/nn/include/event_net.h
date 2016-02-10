@@ -59,7 +59,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  GraphNN<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, LinearParam<mode, Dtype>* >& param_dict) override
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) override
 	{
     	gnn.AddLayer(last_hidden_layer);
 

@@ -80,7 +80,7 @@ public:
 		this->param_dict["w_embed"] = new LinearParam<mode, Dtype>("w_embed",  train_data->num_events, cfg::n_embed, 0, cfg::w_scale);
     	this->param_dict["w_event2h"] = new LinearParam<mode, Dtype>("w_event2h", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_event_out"] = new LinearParam<mode, Dtype>("w_event_out", cfg::n_hidden, train_data->num_events, 0, cfg::w_scale);
-		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", 1, cfg::n_hidden, 0, cfg::w_scale);
+		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_h2h"] = new LinearParam<mode, Dtype>("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", cfg::n_hidden, 1, 0, cfg::w_scale);
 	}
@@ -88,7 +88,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  GraphNN<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, LinearParam<mode, Dtype>* >& param_dict)
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict)
 	{
     	gnn.AddLayer(last_hidden_layer);
     	auto* event_input_layer = new InputLayer<mode, Dtype>(fmt::sprintf("event_input_%d", time_step), GraphAtt::NODE);

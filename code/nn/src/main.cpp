@@ -27,8 +27,8 @@ void Work()
 {
     INet<mode, Dtype>* net; 
     IEventTimeLoader<mode>* etloader = nullptr;
-    if (cfg::multidim_time)
-        etloader = new MultiTimeLoader<mode>();
+    if (cfg::unix_time)
+        etloader = new UnixTimeLoader<mode>();
     else 
         etloader = new SingleTimeLoader<mode>();
     switch (cfg::net_type)

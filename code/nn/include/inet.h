@@ -16,6 +16,7 @@
 #include "data_loader.h"
 #include "err_cnt_criterion_layer.h"
 #include "expnll_criterion_layer.h"
+#include "batch_norm_param.h"
 
 template<MatMode mode, typename Dtype>
 class INet
@@ -144,7 +145,7 @@ public:
 	}
 
 
-	std::map< std::string, LinearParam<mode, Dtype>* > param_dict;
+	std::map< std::string, IParam<mode, Dtype>* > param_dict;
 	GraphNN<mode, Dtype> net_train, net_test;
 	std::vector< GraphData<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
 	std::map<std::string, GraphData<mode, Dtype>* > train_feat, train_label, test_feat, test_label;
@@ -152,7 +153,7 @@ public:
 
     bool initialized;
     void InitNet(GraphNN<mode, Dtype>& gnn, 
-                 std::map< std::string, LinearParam<mode, Dtype>* >& param_dict, 
+                 std::map< std::string, IParam<mode, Dtype>* >& param_dict, 
                  unsigned n_unfold)
     {
         ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden", GraphAtt::NODE);
@@ -181,7 +182,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  GraphNN<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, LinearParam<mode, Dtype>* >& param_dict) = 0;
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) = 0;
 };
 
 #endif

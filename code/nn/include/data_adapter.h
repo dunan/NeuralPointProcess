@@ -19,7 +19,10 @@ inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input,
     {
         g_event_input.push_back(new GraphData<mode, Dtype>(SPARSE));
         g_event_label.push_back(new GraphData<mode, Dtype>(SPARSE));
-        g_time_input.push_back(new GraphData<mode, Dtype>(DENSE));
+        if (cfg::unix_time)
+            g_time_input.push_back(new GraphData<mode, Dtype>(SPARSE));
+        else
+            g_time_input.push_back(new GraphData<mode, Dtype>(DENSE));
         g_time_label.push_back(new GraphData<mode, Dtype>(DENSE));        
     }
 }
@@ -32,8 +35,10 @@ inline void ProcessTimeDataLabel(std::vector<Dtype>& time_data, std::vector<Dtyp
 
 	// we only predict the duration
 	for (int i = time_label.size() - 1; i >= 1; --i)
-        time_label[i] = time_label[i] - time_label[i - 1];
+        time_label[i] = cfg::time_scale * (time_label[i] - time_label[i - 1]);
 
+    if (cfg::unix_time)
+        return;
     if (cfg::T == 0)
     {
         for (int i = time_label.size() - 1; i >= 1; --i)
@@ -46,7 +51,7 @@ inline void ProcessTimeDataLabel(std::vector<Dtype>& time_data, std::vector<Dtyp
 }
 
 template<typename data_type>
-inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data)
+inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >& raw_data, int max_seq_num)
 {
     raw_data.clear();
     std::ifstream f_stream(filename);
@@ -62,6 +67,8 @@ inline void LoadRaw(const char* filename, std::vector< std::vector<data_type> >&
             cur_seq.push_back(d); 
         }
         raw_data.push_back(cur_seq);
+        if (max_seq_num >= 0 && raw_data.size() >= max_seq_num)
+            break;
     }
 }
 
@@ -122,10 +129,15 @@ inline void LoadDataFromFile()
     std::cerr << "loading data..." << std::endl;
     assert(cfg::f_time_prefix && cfg::f_event_prefix);   
 
-    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train);
-    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_event_prefix).c_str(), raw_event_test);
-    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train);
-    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_time_prefix).c_str(), raw_time_test);
+    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, -1);
+    LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, -1);
+    //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_train, cfg::test_top);
+    //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_train, cfg::test_top);
+
+    //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);    
+    //LoadRaw(fmt::sprintf("%s-train.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
+    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_event_prefix).c_str(), raw_event_test, cfg::test_top);
+    LoadRaw(fmt::sprintf("%s-test.txt", cfg::f_time_prefix).c_str(), raw_time_test, cfg::test_top);
 
     assert(raw_event_train.size() == raw_time_train.size());
     assert(raw_event_test.size() == raw_time_test.size());

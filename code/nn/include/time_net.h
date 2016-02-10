@@ -64,7 +64,7 @@ public:
 
 	virtual void InitParamDict() override
 	{
-		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", 1, cfg::n_hidden, 0, cfg::w_scale);
+		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_h2h"] = new LinearParam<mode, Dtype>("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
     	this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", cfg::n_hidden, 1, 0, cfg::w_scale);
 	}
@@ -72,7 +72,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  GraphNN<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, LinearParam<mode, Dtype>* >& param_dict) override
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) override
 	{
 		gnn.AddLayer(last_hidden_layer);
     
