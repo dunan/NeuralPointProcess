@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=rayleigh
+task=exp
 prefix_event=event
 prefix_time=time
 
@@ -11,9 +11,9 @@ hist=0
 gru=0
 n_embed=16
 H=128
-bsize=256
+bsize=128
 bptt=3
-learning_rate=0.0001
+learning_rate=0.001
 max_iter=4000
 cur_iter=0
 T=0
