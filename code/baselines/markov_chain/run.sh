@@ -3,10 +3,10 @@
 data_root=../../../data
 subfolder=real
 
-task=so
+task=taxi
 
-event_prefix=event
-time_prefix=time
+event_prefix=pickup_events
+time_prefix=pickup_time
 
 for order in 1 2 3; do
 

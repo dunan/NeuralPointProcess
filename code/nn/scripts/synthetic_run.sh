@@ -1,8 +1,8 @@
 #!/bin/bash
 
-task=hawkes
-prefix_event=event
-prefix_time=time
+task=mixture-HMM
+prefix_event=event-temporal-3
+prefix_time=time-temporal-3
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -11,15 +11,15 @@ hist=0
 gru=0
 n_embed=16
 H=128
-bsize=128
-bptt=3
-learning_rate=0.0001
+bsize=64
+bptt=5
+learning_rate=0.001
 max_iter=4000
 cur_iter=0
-T=0
+T=24
 w_scale=0.01
 mode=CPU
-net=time
+net=joint
 time_scale=1
 lambda=1
 loss=mse
