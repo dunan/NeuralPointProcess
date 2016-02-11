@@ -118,6 +118,14 @@ inline void Insert2Loader(DataLoader<phase>* dataset,
                                 time_data.data(), 
                                 time_label.data() + 1, 
                                 raw_event_data[i].size());
+
+        if (phase == TEST && i == 0 && cfg::has_eval)
+        {
+            val_data->InsertSequence(raw_event_data[i].data(),
+                                     time_data.data(),
+                                     time_label.data() + 1,
+                                     raw_event_data[i].size());
+        }
     }
 }
 
@@ -149,7 +157,10 @@ inline void LoadDataFromFile()
 
     Insert2Loader(train_data, raw_event_train, raw_time_train, cfg::bptt);
     Insert2Loader(test_data, raw_event_test, raw_time_test, 1);
+
     std::cerr << "#train: " << train_data->num_samples << " #test: " << test_data->num_samples << std::endl;
+    if (cfg::has_eval)
+        std::cerr << "#eval: " << val_data->num_samples << std::endl;
 }
 
 #endif

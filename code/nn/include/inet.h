@@ -44,7 +44,7 @@ public:
         initialized = true;
     }
 
-    void EvaluateDataset(DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
+    void EvaluateDataset(const char* prefix, DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
     {
         auto& last_hidden_test = g_last_hidden_test->node_states->DenseDerived();
         last_hidden_test.Zeros(dataset->batch_size, cfg::n_hidden); 
@@ -54,7 +54,7 @@ public:
         test_loss_map.clear();
         FILE* fid = nullptr;
         if (save_prediction)
-            fid = fopen(fmt::sprintf("%s/pred_iter_%d.txt", cfg::save_dir, cfg::iter).c_str(), "w");
+            fid = fopen(fmt::sprintf("%s/%s_pred_iter_%d.txt", cfg::save_dir, prefix, cfg::iter).c_str(), "w");
         
         while (dataset->NextBatch(etloader, 
                                   g_last_hidden_test, 
@@ -108,11 +108,11 @@ public:
 	        {
     	        std::cerr << "testing" << std::endl;
         	    
-                EvaluateDataset(test_data, true, test_loss_map);
+                EvaluateDataset("test", test_data, true, test_loss_map);
                 PrintTestResults(test_data, test_loss_map);
                 if (cfg::has_eval)
                 {
-                    EvaluateDataset(val_data, cfg::save_eval, test_loss_map);
+                    EvaluateDataset("val", val_data, cfg::save_eval, test_loss_map);
                     PrintTestResults(val_data, test_loss_map);    
                 }
         	}

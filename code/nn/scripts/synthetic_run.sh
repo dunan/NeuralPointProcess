@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=exp
+task=hawkes
 prefix_event=event
 prefix_time=time
 
@@ -13,14 +13,15 @@ n_embed=16
 H=128
 bsize=128
 bptt=3
-learning_rate=0.001
+learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
 net=time
-lambda=1.0
+time_scale=1
+lambda=1
 loss=mse
 save_dir="$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize"
 
@@ -32,6 +33,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -t_scale $time_scale \
     -history $hist \
     -gru $gru \
     -event $DATA_ROOT/$prefix_event \
@@ -44,7 +46,8 @@ dev_id=0
     -svdir $save_dir \
     -hidden $H \
     -embed $n_embed \
-    -save_eval 0 \
+    -save_eval 1 \
+    -eval 1 \
     -T $T \
     -b $bsize \
     -w_scale $w_scale \

@@ -2,7 +2,7 @@
 
 data_root=../../data
 sub_folder=synthetic
-data_name=exp
+data_name=hawkes
 
 time_file=$data_root/$sub_folder/$data_name/time.txt
 event_file=$data_root/$sub_folder/$data_name/event.txt
