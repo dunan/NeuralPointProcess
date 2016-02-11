@@ -7,10 +7,11 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=0
-gru=0
+hist=1
+gru=1
 n_embed=16
-H=128
+H=64
+h2=0
 bsize=64
 bptt=5
 learning_rate=0.001
@@ -33,6 +34,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -h2 $h2 \
     -t_scale $time_scale \
     -history $hist \
     -gru $gru \

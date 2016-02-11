@@ -14,14 +14,14 @@ H=128
 bsize=64
 bptt=3
 learning_rate=0.001
-max_iter=4000
+max_iter=400
 cur_iter=0
 T=0
 w_scale=0.01
 mode=GPU
 net=joint
 loss=mse
-time_scale=10
+time_scale=1
 lambda=27.088494573
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
