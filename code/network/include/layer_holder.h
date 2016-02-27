@@ -64,21 +64,29 @@ public:
 		return state;
 	}
 
-	void Reset()
+	void CleanSeq(std::deque< std::pair< NodeLayer<mode, Dtype>*, ReLULayer<mode, Dtype>* > >& qq)
 	{
-		CollectBack();
-		for (unsigned i = 0; i < num_users; ++i)
+		if (qq.size())
 		{
-			auto& cur_deque = cur_hidden_states[i];
-			if (cur_deque.size())
+			for (unsigned i = 0; i < qq.size(); ++i)
 			{
-				auto& pair_state = cur_deque[0];
+				auto& pair_state = qq[i];
 				auto& linear = pair_state.first->graph_output->node_states->DenseDerived();
 				linear.Zeros(1, cfg::n_hidden);
 				auto& act = pair_state.second->graph_output->node_states->DenseDerived();
 				act.Zeros(1, cfg::n_hidden);
 			}
 		}
+	}
+
+	void Reset()
+	{		
+		for (unsigned i = 0; i < num_users; ++i)
+		{
+			CleanSeq(cur_hidden_states[i]);
+			CleanSeq(hidden_pool[i]);
+		}
+		CollectBack();
 	}
 
 	void CollectBack()
@@ -110,11 +118,13 @@ protected:
 	{
 		int cur_num = cur_hidden_states[user_id].size() + hidden_pool[user_id].size();
 		auto* layer = new NodeLayer<mode, Dtype>(fmt::sprintf("user_%d_hidden_%d", user_id, cur_num));
+		layer->graph_output->graph->Resize(1, 1);
 		auto& states = layer->graph_output->node_states->DenseDerived();
 		states.Zeros(1, cfg::n_hidden);
 
 		auto* act = new ReLULayer<mode, Dtype>(fmt::sprintf("user_%d_hidden_%d_relu", user_id, cur_num), 
 											   GraphAtt::NODE, WriteType::INPLACE); 
+		act->graph_output->graph->Resize(1, 1);
 		auto& act_states = act->graph_output->node_states->DenseDerived();
 		act_states.Zeros(1, cfg::n_hidden);
 
@@ -132,6 +142,7 @@ inline void SetupRNNParams()
 		param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
     	param_dict["w_h2h"] = new LinearParam<mode, Dtype>("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
 
+    	param_dict["w_father2h"] = new LinearParam<mode, Dtype>("w_father2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
         unsigned hidden_size = cfg::n_hidden;
         if (cfg::n_h2)
         {

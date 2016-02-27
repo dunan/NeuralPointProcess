@@ -5,10 +5,10 @@
 #include <map>
 
 template<MatMode mode>
-inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input, 
-                   std::vector< GraphData<mode, Dtype>* >& g_event_label, 
-                   std::vector< GraphData<mode, Dtype>* >& g_time_input, 
-                   std::vector< GraphData<mode, Dtype>* >& g_time_label)
+inline void InitGraphData(std::vector< IMatrix<mode, Dtype>* >& g_event_input, 
+                   std::vector< IMatrix<mode, Dtype>* >& g_event_label, 
+                   std::vector< IMatrix<mode, Dtype>* >& g_time_input, 
+                   std::vector< IMatrix<mode, Dtype>* >& g_time_label)
 {
     g_event_input.clear();
     g_event_label.clear();
@@ -17,13 +17,13 @@ inline void InitGraphData(std::vector< GraphData<mode, Dtype>* >& g_event_input,
             
     for (unsigned i = 0; i < cfg::bptt; ++i)
     {
-        g_event_input.push_back(new GraphData<mode, Dtype>(SPARSE));
-        g_event_label.push_back(new GraphData<mode, Dtype>(SPARSE));
+        g_event_input.push_back(new SparseMat<mode, Dtype>());
+        g_event_label.push_back(new SparseMat<mode, Dtype>());
         if (cfg::unix_time)
-            g_time_input.push_back(new GraphData<mode, Dtype>(SPARSE));
+            g_time_input.push_back(new SparseMat<mode, Dtype>());
         else
-            g_time_input.push_back(new GraphData<mode, Dtype>(DENSE));
-        g_time_label.push_back(new GraphData<mode, Dtype>(DENSE));        
+            g_time_input.push_back(new DenseMat<mode, Dtype>());
+        g_time_label.push_back(new DenseMat<mode, Dtype>());        
     }
 }
 

@@ -13,5 +13,5 @@ echo '============= event =============='
 python event_majority_baseline.py $data_root/$subfolder/$task/$event_prefix
 echo '============= end of event =============='
 echo '============= time =============='
-python time_mean_baseline.py $data_root/$subfolder/$task/$time_prefix 0.00001
+python time_mean_baseline.py $data_root/$subfolder/$task/$time_prefix 0.000001
 echo '============= end of time =============='

@@ -64,59 +64,55 @@ public:
 
 	virtual void InitParamDict() override
 	{
-		this->param_dict["w_time2h"] = new LinearParam<mode, Dtype>("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
-    	this->param_dict["w_h2h"] = new LinearParam<mode, Dtype>("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+        /*
+        this->model.add_diff< LinearParam >("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
+    	this->model.add_diff< LinearParam >("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
 
     	if (cfg::gru)
         {
-            this->param_dict["w_h2update"] = new LinearParam<mode, Dtype>("w_h2update", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_time2update"] = new LinearParam<mode, Dtype>("w_time2update", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_h2reset"] = new LinearParam<mode, Dtype>("w_h2reset", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_time2reset"] = new LinearParam<mode, Dtype>("w_time2reset", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);                        
+            this->model.add_diff< LinearParam >("w_h2update", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+            this->model.add_diff< LinearParam >("w_time2update", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
+            this->model.add_diff< LinearParam >("w_h2reset", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+            this->model.add_diff< LinearParam >("w_time2reset", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);                        
         }
 
         unsigned hidden_size = cfg::n_hidden;
         if (cfg::n_h2)
         {
             hidden_size = cfg::n_h2;
-            this->param_dict["w_hidden2"] = new LinearParam<mode, Dtype>("w_hidden2", cfg::n_hidden, cfg::n_h2, 0, cfg::w_scale);
+            this->model.add_diff< LinearParam >("w_hidden2", cfg::n_hidden, cfg::n_h2, 0, cfg::w_scale);
         }
 
-        this->param_dict["w_time_out"] = new LinearParam<mode, Dtype>("w_time_out", hidden_size, 1, 0, cfg::w_scale);
+        this->model.add_diff< LinearParam >("w_time_out", hidden_size, 1, 0, cfg::w_scale);
+        */
 	}
-
-    virtual ILayer<mode, Dtype>* AddRecur(std::string name, 
-                                          GraphNN<mode, Dtype>& gnn,
+/*
+    ILayer<mode, Dtype>* AddRecur(std::string name, 
+                                          NNGraph<mode, Dtype>& gnn,
                                           ILayer<mode, Dtype> *last_hidden_layer, 
                                           ILayer<mode, Dtype>* time_feat, 
                                           IParam<mode, Dtype>* h2h, 
                                           IParam<mode, Dtype>* t2h)
     {
-        auto* hidden_layer = new NodeLayer<mode, Dtype>(name);
-        hidden_layer->AddParam(time_feat->name, t2h, GraphAtt::NODE); 
-        hidden_layer->AddParam(last_hidden_layer->name, h2h, GraphAtt::NODE); 
+        return gnn.cl< ParamLayer >({time_feat, last_hidden_layer}, {t2h, h2h}); 
+    }
 
-        gnn.AddEdge(time_feat, hidden_layer);
-        gnn.AddEdge(last_hidden_layer, hidden_layer);
-        return hidden_layer;
-    }	
-
-    virtual ILayer<mode, Dtype>* AddRNNLayer(int time_step, 
-                                             GraphNN<mode, Dtype>& gnn,
+    ILayer<mode, Dtype>* AddRNNLayer(int time_step, 
+                                             NNGraph<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* time_feat, 
-                                             std::map< std::string, IParam<mode, Dtype>* >& param_dict)
+                                             std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict)
     {
         auto* hidden_layer = AddRecur(fmt::sprintf("hidden_%d", time_step), 
                                       gnn, last_hidden_layer, time_feat,
                                       param_dict["w_h2h"], param_dict["w_time2h"]);        
 
-        auto* relu_hidden_layer = new ReLULayer<mode, Dtype>(fmt::sprintf("recurrent_hidden_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-        gnn.AddEdge(hidden_layer, relu_hidden_layer);
+        auto* relu_hidden_layer = gnn.cl< ReLULayer >(fmt::sprintf("recurrent_hidden_%d", time_step), {hidden_layer});
 
         return relu_hidden_layer;
-    }
+    }*/
 
+/*
     virtual ILayer<mode, Dtype>* AddGRULayer(int time_step, 
                                              GraphNN<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
@@ -170,61 +166,49 @@ public:
 
         return next_h;
     }
-
+*/
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
-											  GraphNN<mode, Dtype>& gnn, 
+											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) override
+                                    		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict) override
 	{
-		gnn.AddLayer(last_hidden_layer);
+		gnn.InsertLayer(last_hidden_layer);
     
-		auto* time_input_layer = new InputLayer<mode, Dtype>(fmt::sprintf("time_input_%d", time_step), GraphAtt::NODE);
-
+		//auto* time_input_layer = gnn.cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), {});
+/*
 		ILayer<mode, Dtype>* recurrent_output = nullptr;
         if (cfg::gru)
         {
-            recurrent_output = AddGRULayer(time_step, gnn, last_hidden_layer, time_input_layer, param_dict);
+            //recurrent_output = AddGRULayer(time_step, gnn, last_hidden_layer, time_input_layer, param_dict);
         } else
             recurrent_output = AddRNNLayer(time_step, gnn, last_hidden_layer, time_input_layer, param_dict);
 
         auto* top_hidden = recurrent_output;
         if (cfg::n_h2)
         {
-            auto* hidden_2 = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("hidden_2_%d", time_step), param_dict["w_hidden2"], GraphAtt::NODE);
-            gnn.AddEdge(recurrent_output, hidden_2);
-            auto* relu_2 = new ReLULayer<mode, Dtype>(fmt::sprintf("relu_h2_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-            gnn.AddEdge(hidden_2, relu_2);
+            auto* hidden_2 = gnn.cl< ParamLayer >({recurrent_output}, param_dict["w_hidden2"]);
+            auto* relu_2 = gnn.cl< ReLULayer >({hidden_2});
             top_hidden = relu_2;
         }
 
-	    auto* time_out_layer = new SingleParamNodeLayer<mode, Dtype>(fmt::sprintf("time_out_%d", time_step), param_dict["w_time_out"], GraphAtt::NODE); 
-	    gnn.AddEdge(top_hidden, time_out_layer);
+	    auto* time_out_layer = gnn.cl< ParamLayer >(fmt::sprintf("time_out_%d", time_step), {top_hidden}, param_dict["w_time_out"]);
 	    
-	    //auto* exp_layer = new ExpLayer<mode, Dtype>(fmt::sprintf("expact_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);    
-	    //gnn.AddEdge(time_out_layer, exp_layer);
-    	auto* mse_criterion = new MSECriterionLayer<mode, Dtype>(fmt::sprintf("mse_%d", time_step),  
-    															 cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
-    	auto* mae_criterion = new ABSCriterionLayer<mode, Dtype>(fmt::sprintf("mae_%d", time_step),  PropErr::N);
-
-    	gnn.AddEdge(time_out_layer, mse_criterion);
-    	gnn.AddEdge(time_out_layer, mae_criterion);
-
-    	if (cfg::loss_type == LossType::EXP)
-    	{
-    		assert(false);
-    		auto* expnll_criterion = new ExpNLLCriterionLayer<mode, Dtype>(fmt::sprintf("expnll_%d", time_step));
-    		gnn.AddEdge(time_out_layer, expnll_criterion); 
-    	}
-
-    	return recurrent_output; 
+    	auto* mse_criterion = gnn.cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), {time_out_layer},  
+                                                            cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
+    	auto* mae_criterion = gnn.cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), {time_out_layer}, PropErr::N);
+*/
+        return nullptr;
+    	//return recurrent_output; 
 	}
 
 	virtual void WriteTestBatch(FILE* fid) override
 	{
-		this->net_test.GetDenseNodeState("time_out_0", buf);		
+        /*
+		this->net_test.GetDenseNodeState("time_out_0", buf);
 		buf2.CopyFrom(this->g_time_label[0]->node_states->DenseDerived());
         for (size_t i = 0; i < buf.rows; ++i)
             fprintf(fid, "%.6f %.6f\n",  buf.data[i], buf2.data[i]);
+            */
 	}
 
 	DenseMat<CPU, Dtype> buf, buf2;

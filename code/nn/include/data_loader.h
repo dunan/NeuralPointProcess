@@ -1,7 +1,6 @@
 #ifndef DATA_LOADER_H
 #define DATA_LOADER_H
 
-#include "graph_data.h"
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -79,17 +78,17 @@ public:
         sequences.push_back(cur_seq);
     }   
 
-    void ReloadSlot(GraphData<CPU, Dtype>* g_last_hidden, unsigned batch_idx)
+    void ReloadSlot(IMatrix<CPU, Dtype>* g_last_hidden, unsigned batch_idx)
     {
-        auto& last_hidden = g_last_hidden->node_states->DenseDerived();
+        auto& last_hidden = g_last_hidden->DenseDerived();
         memset(last_hidden.data + last_hidden.cols * batch_idx, 0, sizeof(Dtype) * last_hidden.cols);
 
         ReloadSlot(batch_idx);
     }    
 
-    void ReloadSlot(GraphData<GPU, Dtype>* g_last_hidden, unsigned batch_idx)
+    void ReloadSlot(IMatrix<GPU, Dtype>* g_last_hidden, unsigned batch_idx)
     {
-        auto& last_hidden = g_last_hidden->node_states->DenseDerived();
+        auto& last_hidden = g_last_hidden->DenseDerived();
         cudaMemset(last_hidden.data + last_hidden.cols * batch_idx, 0, sizeof(Dtype) * last_hidden.cols); 
 
         ReloadSlot(batch_idx);
@@ -118,11 +117,11 @@ public:
     
     template<MatMode mode>             
     inline void NextBpttBatch(IEventTimeLoader<mode>* etloader, 
-                              int bptt, GraphData<mode, Dtype>* g_last_hidden,
-                              std::vector< GraphData<mode, Dtype>* >& g_event_input,
-                              std::vector< GraphData<mode, Dtype>* >& g_time_input, 
-                              std::vector< GraphData<mode, Dtype>* >& g_event_label,
-                              std::vector< GraphData<mode, Dtype>* >& g_time_label)
+                              int bptt, IMatrix<mode, Dtype>* g_last_hidden,
+                              std::vector< IMatrix<mode, Dtype>* >& g_event_input,
+                              std::vector< IMatrix<mode, Dtype>* >& g_time_input, 
+                              std::vector< IMatrix<mode, Dtype>* >& g_event_label,
+                              std::vector< IMatrix<mode, Dtype>* >& g_time_label)
     {
         if (!initialized)
             this->StartNewEpoch();
@@ -135,7 +134,6 @@ public:
                 this->ReloadSlot(g_last_hidden, i); 
             }
         }
-        g_last_hidden->graph->Resize(1, this->batch_size);
         for (int j = 0; j < bptt; ++j)
         {                                  
             etloader->LoadEvent(this, g_event_input[j], g_event_label[j], this->batch_size, j);                        
@@ -158,11 +156,11 @@ public:
     
     template<MatMode mode>
     inline bool NextBatch(IEventTimeLoader<mode>* etloader, 
-                          GraphData<mode, Dtype>* g_last_hidden,
-                          GraphData<mode, Dtype>* g_event_input, 
-                          GraphData<mode, Dtype>* g_time_input, 
-                          GraphData<mode, Dtype>* g_event_label, 
-                          GraphData<mode, Dtype>* g_time_label)
+                          IMatrix<mode, Dtype>* g_last_hidden,
+                          IMatrix<mode, Dtype>* g_event_input, 
+                          IMatrix<mode, Dtype>* g_time_input, 
+                          IMatrix<mode, Dtype>* g_event_label, 
+                          IMatrix<mode, Dtype>* g_time_label)
     {
         if (!this->initialized)
             this->StartNewEpoch();
@@ -187,7 +185,7 @@ public:
         
         if (delta_size)
         {
-            auto& prev_hidden = g_last_hidden->node_states->DenseDerived();    
+            auto& prev_hidden = g_last_hidden->DenseDerived();    
             if (cur_batch_size == batch_size) // insufficient for the first time
             {
                 std::vector<unsigned> ordered; 
@@ -224,7 +222,6 @@ public:
                 prev_hidden.Resize(cur_batch_size - delta_size, prev_hidden.cols);
             cur_batch_size -= delta_size;
         }
-        g_last_hidden->graph->Resize(1, cur_batch_size);
         etloader->LoadEvent(this, g_event_input, g_event_label, cur_batch_size, 0);
         etloader->LoadTime(this, g_time_input, g_time_label, cur_batch_size, 0);
         for (unsigned i = 0; i < cur_batch_size; ++i)
@@ -259,13 +256,10 @@ public:
     IEventTimeLoader() {}
 
     
-    void LoadEvent(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
+    void LoadEvent(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step)
     {
-        g_feat->graph->Resize(1, cur_batch_size);
-        g_label->graph->Resize(1, cur_batch_size);
-
-        auto& feat = g_feat->node_states->SparseDerived();
-        auto& label = g_label->node_states->SparseDerived();
+        auto& feat = g_feat->SparseDerived();
+        auto& label = g_label->SparseDerived();
         
         this->event_feat_cpu.Resize(cur_batch_size, d->num_events);
         this->event_feat_cpu.ResizeSp(cur_batch_size, cur_batch_size + 1); 
@@ -290,7 +284,7 @@ public:
         label.CopyFrom(this->event_label_cpu);
     } 
 
-    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) = 0;
+    virtual void LoadTime(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) = 0;
 
     SparseMat<CPU, Dtype> event_feat_cpu, event_label_cpu;    
 };
@@ -301,12 +295,10 @@ class SingleTimeLoader : public IEventTimeLoader<mode>
 public:
     SingleTimeLoader() : IEventTimeLoader<mode>() {}
 
-    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
+    virtual void LoadTime(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
     {
-        g_feat->graph->Resize(1, cur_batch_size);
-        g_label->graph->Resize(1, cur_batch_size);
-        auto& feat = g_feat->node_states->DenseDerived();
-        auto& label = g_label->node_states->DenseDerived();
+        auto& feat = g_feat->DenseDerived();
+        auto& label = g_label->DenseDerived();
         
         this->time_feat_cpu.Resize(cur_batch_size, 1);
         this->time_label_cpu.Resize(cur_batch_size, 1);
@@ -330,12 +322,10 @@ class UnixTimeLoader : public IEventTimeLoader<mode>
 public:
     UnixTimeLoader() : IEventTimeLoader<mode>() {}
 
-    virtual void LoadTime(IDataLoader* d, GraphData<mode, Dtype>* g_feat, GraphData<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
+    virtual void LoadTime(IDataLoader* d, IMatrix<mode, Dtype>* g_feat, IMatrix<mode, Dtype>* g_label, unsigned cur_batch_size, unsigned step) override
     {
-        g_feat->graph->Resize(1, cur_batch_size);
-        g_label->graph->Resize(1, cur_batch_size);
-        auto& feat = g_feat->node_states->SparseDerived();
-        auto& label = g_label->node_states->DenseDerived();
+        auto& feat = g_feat->SparseDerived();
+        auto& label = g_label->DenseDerived();
 
         time_feat_cpu.Resize(cur_batch_size, cfg::time_dim);
         time_label_cpu.Resize(cur_batch_size, 1);

@@ -72,7 +72,7 @@ public:
 	}
 
     virtual ILayer<mode, Dtype>* AddRecur(std::string name, 
-                                          GraphNN<mode, Dtype>& gnn,
+                                          NNGraph<mode, Dtype>& gnn,
                                           ILayer<mode, Dtype> *last_hidden_layer, 
                                           ILayer<mode, Dtype>* event_feat, 
                                           IParam<mode, Dtype>* h2h, 
@@ -88,7 +88,7 @@ public:
     }    
 
     virtual ILayer<mode, Dtype>* AddRNNLayer(int time_step, 
-                                             GraphNN<mode, Dtype>& gnn,
+                                             NNGraph<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* event_feat, 
                                              std::map< std::string, IParam<mode, Dtype>* >& param_dict)
@@ -104,7 +104,7 @@ public:
     }
 
     virtual ILayer<mode, Dtype>* AddGRULayer(int time_step, 
-                                             GraphNN<mode, Dtype>& gnn,
+                                             NNGraph<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* event_feat, 
                                              std::map< std::string, IParam<mode, Dtype>* >& param_dict)
@@ -159,7 +159,7 @@ public:
     }
 
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
-											  GraphNN<mode, Dtype>& gnn, 
+											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
                                     		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) override
 	{

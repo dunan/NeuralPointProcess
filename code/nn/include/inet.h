@@ -3,24 +3,19 @@
 
 #include "dense_matrix.h"
 #include "linear_param.h"
-#include "graphnn.h"
+#include "nngraph.h"
 #include "param_layer.h"
 #include "input_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
-#include "exp_layer.h"
+#include "model.h"
 #include "mse_criterion_layer.h"
 #include "abs_criterion_layer.h"
 #include "classnll_criterion_layer.h"
 #include "config.h"
 #include "data_loader.h"
 #include "err_cnt_criterion_layer.h"
-#include "expnll_criterion_layer.h"
-#include "batch_norm_param.h"
-#include "sigmoid_layer.h"
-#include "elewise_mul_layer.h"
-#include "const_trans_layer.h"
-#include "gather_layer.h"
+#include "learner.h"
 
 template<MatMode mode, typename Dtype>
 class INet
@@ -30,23 +25,24 @@ public:
 	{
         this->etloader = _etloader;
         initialized = false;
-        g_last_hidden_train = new GraphData<mode, Dtype>(DENSE);
-        g_last_hidden_test = new GraphData<mode, Dtype>(DENSE);
-		InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label); 
+        g_last_hidden_train = new DenseMat<mode, Dtype>();
+        g_last_hidden_test = new DenseMat<mode, Dtype>();
+		InitGraphData(g_event_input, g_event_label, g_time_input, g_time_label);
+        learner = new MomentumSGDLearner<mode, Dtype>(&model, cfg::lr, cfg::momentum, cfg::l2_penalty);
 	}
 
     void Setup()
     {
         InitParamDict();
 
-        InitNet(net_train, param_dict, cfg::bptt);
-        InitNet(net_test, param_dict, 1);
+        InitNet(net_train, model.diff_params, cfg::bptt);
+        InitNet(net_test, model.diff_params, 1);
         initialized = true;
     }
 
     void EvaluateDataset(const char* prefix, DataLoader<TEST>* dataset, bool save_prediction, std::map<std::string, Dtype>& test_loss_map)
     {
-        auto& last_hidden_test = g_last_hidden_test->node_states->DenseDerived();
+        auto& last_hidden_test = g_last_hidden_test->DenseDerived();
         last_hidden_test.Zeros(dataset->batch_size, cfg::n_hidden); 
 
         dataset->StartNewEpoch();
@@ -75,7 +71,7 @@ public:
             if (save_prediction)
                 WriteTestBatch(fid);
             if (cfg::bptt > 1)
-                net_test.GetDenseNodeState("recurrent_hidden_0", last_hidden_test);            
+                net_test.GetState("recurrent_hidden_0", last_hidden_test);            
         }
         if (save_prediction)
             fclose(fid);
@@ -92,13 +88,13 @@ public:
     	if (init_iter > 0)
     	{
         	std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
-            net_train.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
+            //net_train.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
     	}
         			
     	LinkTrainData();
     	LinkTestData();
 
-        auto& last_hidden_train = g_last_hidden_train->node_states->DenseDerived();         
+        auto& last_hidden_train = g_last_hidden_train->DenseDerived();         
     	last_hidden_train.Zeros(cfg::batch_size, cfg::n_hidden);
     	std::map<std::string, Dtype> test_loss_map;
 
@@ -120,7 +116,7 @@ public:
         	if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
         	{
             	std::cerr << fmt::sprintf("saving model for iter = %d", cfg::iter) << std::endl;
-                net_train.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
+                //net_train.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
         	}
         
         	train_data->NextBpttBatch(etloader, 
@@ -135,11 +131,11 @@ public:
         	auto loss_map = net_train.ForwardLabel(train_label);
             if (cfg::bptt > 1 && cfg::use_history)
             {
-                net_train.GetDenseNodeState(fmt::sprintf("recurrent_hidden_%d", cfg::bptt - 1), last_hidden_train);
+                net_train.GetState(fmt::sprintf("recurrent_hidden_%d", cfg::bptt - 1), last_hidden_train);
             }
 
             net_train.BackPropagation();
-            net_train.UpdateParams(cfg::lr, cfg::l2_penalty, cfg::momentum);   
+            learner->Update();   
 
         	if (cfg::iter % cfg::report_interval == 0)
         	{
@@ -148,24 +144,20 @@ public:
     	}
 	}
 
+	NNGraph<mode, Dtype> net_train, net_test;
+    Model<mode, Dtype> model;
+    MomentumSGDLearner<mode, Dtype>* learner;
 
-	std::map< std::string, IParam<mode, Dtype>* > param_dict;
-	GraphNN<mode, Dtype> net_train, net_test;
-	std::vector< GraphData<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
-	std::map<std::string, GraphData<mode, Dtype>* > train_feat, train_label, test_feat, test_label;
+	std::vector< IMatrix<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
+	std::map<std::string, IMatrix<mode, Dtype>* > train_feat, train_label, test_feat, test_label;
     IEventTimeLoader<mode>* etloader;
 
     bool initialized;
-    void InitNet(GraphNN<mode, Dtype>& gnn, 
-                 std::map< std::string, IParam<mode, Dtype>* >& param_dict, 
+    void InitNet(NNGraph<mode, Dtype>& gnn, 
+                 std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict, 
                  unsigned n_unfold)
     {
-        ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden", GraphAtt::NODE);
-
-        for (auto it = param_dict.begin(); it != param_dict.end(); ++it)
-        {
-            gnn.AddParam(it->second);
-        }
+        ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden");
 
         for (unsigned i = 0; i < n_unfold; ++i)
         {
@@ -173,8 +165,7 @@ public:
             last_hidden_layer = new_hidden;
         }
     }    
-
-    GraphData<mode, Dtype>* g_last_hidden_train, *g_last_hidden_test;
+    IMatrix<mode, Dtype>* g_last_hidden_train, *g_last_hidden_test;
 
     virtual void WriteTestBatch(FILE* fid) = 0;
 	virtual void LinkTrainData() = 0;
@@ -184,9 +175,9 @@ public:
 
 	virtual void InitParamDict() = 0;
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
-											  GraphNN<mode, Dtype>& gnn, 
+											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) = 0;
+                                    		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict) = 0;
 };
 
 #endif

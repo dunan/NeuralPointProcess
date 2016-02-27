@@ -23,6 +23,7 @@ typedef double Dtype;
 #include "elewise_mul_layer.h"
 #include "const_trans_layer.h"
 #include "gather_layer.h"
+#include "batch_norm_param.h"
 
 const MatMode mode = CPU;
 
@@ -63,6 +64,8 @@ struct cfg
 
         for (int i = 1; i < argc; i += 2)
         {
+            if (strcmp(argv[i], "-net") == 0)
+                f_net = argv[i + 1];
             if (strcmp(argv[i], "-time") == 0)
                 f_time_prefix = argv[i + 1];
             if (strcmp(argv[i], "-gru") == 0)
@@ -105,7 +108,7 @@ struct cfg
     			save_dir = argv[i + 1];
         }	
 
-
+        assert(f_net && f_time_prefix && f_event_prefix); 
         assert(unix_str.size());
         time_dim = 0;
         for (size_t i = 0; i < unix_str.size(); ++i)

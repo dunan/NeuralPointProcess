@@ -5,22 +5,14 @@
 #include <algorithm>
 #include <cstring>
 #include <cmath>
-#include "dense_matrix.h"
-#include "linear_param.h"
-#include "graphnn.h"
-#include "param_layer.h"
-#include "input_layer.h"
-#include "relu_layer.h"
-#include "exp_layer.h"
-#include "mse_criterion_layer.h"
-#include "abs_criterion_layer.h"
-#include "batch_norm_param.h"
 #include "config.h"
 #include "data_loader.h"
 #include "data_adapter.h"
 #include "time_net.h"
-#include "joint_net.h"
-#include "event_net.h"
+//#include "joint_net.h"
+//#include "event_net.h"
+
+const MatMode mode = CPU;
 
 template<MatMode mode>
 void Work()
@@ -36,12 +28,14 @@ void Work()
         case NetType::TIME:
             net = new TimeNet<mode, Dtype>(etloader);
             break;
+            /*
         case NetType::JOINT:
             net = new JointNet<mode, Dtype>(etloader);
             break;
         case NetType::EVENT:
             net = new EventNet<mode, Dtype>(etloader);
             break;
+            */
         default:
             std::cerr << "unsupported nettype" << std::endl;
             return;
@@ -50,6 +44,27 @@ void Work()
     net->Setup();
     net->MainLoop();
 }
+
+class ORZ
+{
+public:    
+    template<typename T>
+    void cl()
+    {
+        T* t = new T[10];
+    }
+};
+
+    
+    template<MatMode mode, typename Dtype>
+class PPP
+{
+    void Test()
+    {        
+        net_train.template net_train.cl<int>();
+    }
+    ORZ<mode, Dtype> net_train;
+};
 
 int main(const int argc, const char** argv)
 {	

@@ -4,6 +4,7 @@
 typedef double Dtype;
 #include "cppformat/format.h"
 #include <set>
+#include "imatrix.h"
 #include <map>
 
 enum class NetType

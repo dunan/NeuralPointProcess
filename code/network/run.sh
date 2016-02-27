@@ -8,16 +8,16 @@ DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 gru=0
-n_embed=128
-H=128
+n_embed=32
+H=256
 h2=0
 bptt=1
 learning_rate=0.001
 max_iter=4000
 cur_iter=0
-w_scale=0.01
-time_scale=0.00001
-lambda=0.06681
+w_scale=0.001
+time_scale=0.000001
+lambda=6
 unix_str=wHMmd
 save_dir=$RESULT_ROOT/$net-$task-gru-$gru-hidden-$H-h2-$h2-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
@@ -29,6 +29,7 @@ fi
 dev_id=0
 
 ./build/main \
+    -net $DATA_ROOT/links.txt \
     -gru $gru \
     -unix_str $unix_str \
     -h2 $h2 \
@@ -42,6 +43,7 @@ dev_id=0
     -hidden $H \
     -embed $n_embed \
     -m 0.9 \
+    -l2 0.01 \
     -w_scale $w_scale \
     -int_report 500 \
     -int_test 10000 \
