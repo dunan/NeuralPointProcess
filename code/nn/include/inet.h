@@ -157,7 +157,7 @@ public:
                  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict, 
                  unsigned n_unfold)
     {
-        ILayer<mode, Dtype>* last_hidden_layer = new InputLayer<mode, Dtype>("last_hidden");
+        auto* last_hidden_layer = cl< InputLayer >("last_hidden", gnn, {});
 
         for (unsigned i = 0; i < n_unfold; ++i)
         {

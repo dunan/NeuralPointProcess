@@ -63,11 +63,11 @@ public:
 	}
 
 	virtual void InitParamDict() override
-	{
-        /*
-        this->model.add_diff< LinearParam >("w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
-    	this->model.add_diff< LinearParam >("w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+	{        
+        add_diff< LinearParam >(this->model, "w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
+    	add_diff< LinearParam >(this->model, "w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
 
+/*
     	if (cfg::gru)
         {
             this->model.add_diff< LinearParam >("w_h2update", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
@@ -75,18 +75,17 @@ public:
             this->model.add_diff< LinearParam >("w_h2reset", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
             this->model.add_diff< LinearParam >("w_time2reset", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);                        
         }
-
+*/
         unsigned hidden_size = cfg::n_hidden;
         if (cfg::n_h2)
         {
             hidden_size = cfg::n_h2;
-            this->model.add_diff< LinearParam >("w_hidden2", cfg::n_hidden, cfg::n_h2, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_hidden2", cfg::n_hidden, cfg::n_h2, 0, cfg::w_scale);
         }
 
-        this->model.add_diff< LinearParam >("w_time_out", hidden_size, 1, 0, cfg::w_scale);
-        */
+        add_diff< LinearParam >(this->model, "w_time_out", hidden_size, 1, 0, cfg::w_scale);        
 	}
-/*
+
     ILayer<mode, Dtype>* AddRecur(std::string name, 
                                           NNGraph<mode, Dtype>& gnn,
                                           ILayer<mode, Dtype> *last_hidden_layer, 
@@ -94,7 +93,7 @@ public:
                                           IParam<mode, Dtype>* h2h, 
                                           IParam<mode, Dtype>* t2h)
     {
-        return gnn.cl< ParamLayer >({time_feat, last_hidden_layer}, {t2h, h2h}); 
+        return cl< ParamLayer >(gnn, {time_feat, last_hidden_layer}, {t2h, h2h}); 
     }
 
     ILayer<mode, Dtype>* AddRNNLayer(int time_step, 
@@ -107,10 +106,10 @@ public:
                                       gnn, last_hidden_layer, time_feat,
                                       param_dict["w_h2h"], param_dict["w_time2h"]);        
 
-        auto* relu_hidden_layer = gnn.cl< ReLULayer >(fmt::sprintf("recurrent_hidden_%d", time_step), {hidden_layer});
+        auto* relu_hidden_layer = cl< ReLULayer >(fmt::sprintf("recurrent_hidden_%d", time_step), gnn, {hidden_layer});
 
         return relu_hidden_layer;
-    }*/
+    }
 
 /*
     virtual ILayer<mode, Dtype>* AddGRULayer(int time_step, 
@@ -171,11 +170,9 @@ public:
 											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
                                     		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict) override
-	{
-		gnn.InsertLayer(last_hidden_layer);
-    
-		//auto* time_input_layer = gnn.cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), {});
-/*
+	{		    
+		auto* time_input_layer = cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), gnn, {});
+
 		ILayer<mode, Dtype>* recurrent_output = nullptr;
         if (cfg::gru)
         {
@@ -186,19 +183,18 @@ public:
         auto* top_hidden = recurrent_output;
         if (cfg::n_h2)
         {
-            auto* hidden_2 = gnn.cl< ParamLayer >({recurrent_output}, param_dict["w_hidden2"]);
-            auto* relu_2 = gnn.cl< ReLULayer >({hidden_2});
+            auto* hidden_2 = cl< ParamLayer >(gnn, {recurrent_output}, {param_dict["w_hidden2"]});
+            auto* relu_2 = cl< ReLULayer >(gnn, {hidden_2});
             top_hidden = relu_2;
         }
 
-	    auto* time_out_layer = gnn.cl< ParamLayer >(fmt::sprintf("time_out_%d", time_step), {top_hidden}, param_dict["w_time_out"]);
+	    auto* time_out_layer = cl< ParamLayer >(fmt::sprintf("time_out_%d", time_step), gnn, {top_hidden}, {param_dict["w_time_out"]});
 	    
-    	auto* mse_criterion = gnn.cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), {time_out_layer},  
+    	cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {time_out_layer},  
                                                             cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
-    	auto* mae_criterion = gnn.cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), {time_out_layer}, PropErr::N);
-*/
-        return nullptr;
-    	//return recurrent_output; 
+    	cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer}, PropErr::N);
+
+    	return recurrent_output; 
 	}
 
 	virtual void WriteTestBatch(FILE* fid) override

@@ -45,27 +45,6 @@ void Work()
     net->MainLoop();
 }
 
-class ORZ
-{
-public:    
-    template<typename T>
-    void cl()
-    {
-        T* t = new T[10];
-    }
-};
-
-    
-    template<MatMode mode, typename Dtype>
-class PPP
-{
-    void Test()
-    {        
-        net_train.template net_train.cl<int>();
-    }
-    ORZ<mode, Dtype> net_train;
-};
-
 int main(const int argc, const char** argv)
 {	
     cfg::LoadParams(argc, argv);    

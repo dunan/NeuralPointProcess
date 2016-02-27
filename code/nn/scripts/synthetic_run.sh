@@ -1,20 +1,20 @@
 #!/bin/bash
 
-task=hawkes
+task=exp
 prefix_event=event
 prefix_time=time
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=1
-gru=1
-n_embed=16
-H=64
+hist=0
+gru=0
+n_embed=1
+H=128
 h2=0
-bsize=64
-bptt=5
-learning_rate=0.001
+bsize=128
+bptt=3
+learning_rate=0.0001
 max_iter=4000
 cur_iter=0
 T=0
