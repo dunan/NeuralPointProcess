@@ -3,14 +3,18 @@
 
 #include "dense_matrix.h"
 #include "linear_param.h"
+#include "const_scalar_param.h"
 #include "nngraph.h"
 #include "param_layer.h"
 #include "input_layer.h"
+#include "c_add_layer.h"
+#include "c_mul_layer.h"
 #include "cppformat/format.h"
 #include "relu_layer.h"
 #include "model.h"
 #include "mse_criterion_layer.h"
 #include "abs_criterion_layer.h"
+#include "sigmoid_layer.h"
 #include "classnll_criterion_layer.h"
 #include "config.h"
 #include "data_loader.h"
@@ -35,8 +39,8 @@ public:
     {
         InitParamDict();
 
-        InitNet(net_train, model.diff_params, cfg::bptt);
-        InitNet(net_test, model.diff_params, 1);
+        InitNet(net_train, model.all_params, cfg::bptt);
+        InitNet(net_test, model.all_params, 1);
         initialized = true;
     }
 
@@ -154,7 +158,7 @@ public:
 
     bool initialized;
     void InitNet(NNGraph<mode, Dtype>& gnn, 
-                 std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict, 
+                 std::map< std::string, IParam<mode, Dtype>* >& param_dict, 
                  unsigned n_unfold)
     {
         auto* last_hidden_layer = cl< InputLayer >("last_hidden", gnn, {});
@@ -177,7 +181,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict) = 0;
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) = 0;
 };
 
 #endif

@@ -75,18 +75,17 @@ public:
     	add_diff< LinearParam >(this->model, "w_event2h", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
 		add_diff< LinearParam >(this->model, "w_time2h", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
     	add_diff< LinearParam >(this->model, "w_h2h", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-
-        /*
+        
         if (cfg::gru)
         {
-            this->param_dict["w_h2update"] = new LinearParam<mode, Dtype>("w_h2update", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_event2update"] = new LinearParam<mode, Dtype>("w_event2update", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_time2update"] = new LinearParam<mode, Dtype>("w_time2update", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_h2reset"] = new LinearParam<mode, Dtype>("w_h2reset", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_event2reset"] = new LinearParam<mode, Dtype>("w_event2reset", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
-            this->param_dict["w_time2reset"] = new LinearParam<mode, Dtype>("w_time2reset", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);                        
+            add_const< ConstScalarParam >(this->model, "const_scalar", -1, 1); 
+            add_diff< LinearParam >(this->model, "w_h2update", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_event2update", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_time2update", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_h2reset", cfg::n_hidden, cfg::n_hidden, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_event2reset", cfg::n_embed, cfg::n_hidden, 0, cfg::w_scale);
+            add_diff< LinearParam >(this->model, "w_time2reset", cfg::time_dim, cfg::n_hidden, 0, cfg::w_scale);                        
         }
-        */
         unsigned hidden_size = cfg::n_hidden;
         if (cfg::n_h2)
         {
@@ -114,16 +113,16 @@ public:
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* event_feat, 
                                              ILayer<mode, Dtype>* time_feat, 
-                                             std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict)
+                                             std::map< std::string, IParam<mode, Dtype>* >& param_dict)
     {
         auto* hidden_layer = AddRecur(fmt::sprintf("hidden_%d", time_step), 
                                       gnn, last_hidden_layer, event_feat, time_feat,
                                       param_dict["w_h2h"], param_dict["w_event2h"], param_dict["w_time2h"]);        
         return cl< ReLULayer >(fmt::sprintf("recurrent_hidden_%d", time_step), gnn, {hidden_layer});
     }
-/*
+
     virtual ILayer<mode, Dtype>* AddGRULayer(int time_step, 
-                                             GraphNN<mode, Dtype>& gnn,
+                                             NNGraph<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* event_feat, 
                                              ILayer<mode, Dtype>* time_feat, 
@@ -133,57 +132,42 @@ public:
         auto* update_linear = AddRecur(fmt::sprintf("update_linear_%d", time_step), 
                                        gnn, last_hidden_layer, event_feat, time_feat, 
                                        param_dict["w_h2update"], param_dict["w_event2update"], param_dict["w_time2update"]); 
-        auto* update_gate = new SigmoidLayer<mode, Dtype>(fmt::sprintf("update_gate_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-        gnn.AddEdge(update_linear, update_gate);
+        auto* update_gate = cl<SigmoidLayer>(gnn, {update_linear});
 
         // local reset_gate = nn.Sigmoid()(new_input_sum(input_size_L, x, prev_h))
         auto* reset_linear = AddRecur(fmt::sprintf("reset_linear_%d", time_step), 
                                       gnn, last_hidden_layer, event_feat, time_feat, 
                                       param_dict["w_h2reset"], param_dict["w_event2update"], param_dict["w_time2reset"]);         
-        auto* reset_gate = new SigmoidLayer<mode, Dtype>(fmt::sprintf("reset_gate_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-        gnn.AddEdge(reset_linear, reset_gate);
+        auto* reset_gate = cl<SigmoidLayer>(gnn, {reset_linear});
 
         // local gated_hidden = nn.CMulTable()({reset_gate, prev_h})
-        auto* gated_hidden = new PairMulLayer<mode, Dtype>(fmt::sprintf("gated_hidden_%d", time_step), GraphAtt::NODE);
-        gnn.AddEdge(reset_gate, gated_hidden);
-        gnn.AddEdge(last_hidden_layer, gated_hidden);
-
+        auto* gated_hidden = cl<CMulLayer>(gnn, {reset_gate, last_hidden_layer});
 
         // local hidden_candidate = nn.Tanh()(nn.CAddTable()({p1,p2}))
         auto* hidden_candidate_linear = AddRecur(fmt::sprintf("hidden_candidate_linear%d", time_step), 
                                           gnn, gated_hidden, event_feat, time_feat,
                                           param_dict["w_h2h"], param_dict["w_event2h"], param_dict["w_time2h"]);
-        auto* hidden_candidate = new ReLULayer<mode, Dtype>(fmt::sprintf("hidden_candidate_%d", time_step), GraphAtt::NODE, WriteType::INPLACE);
-        gnn.AddEdge(hidden_candidate_linear, hidden_candidate);
+        auto* hidden_candidate = cl< ReLULayer >(gnn, {hidden_candidate_linear});
 
         // local zh = nn.CMulTable()({update_gate, hidden_candidate})
-        auto* zh = new PairMulLayer<mode, Dtype>(fmt::sprintf("zh_%d", time_step), GraphAtt::NODE);
-        gnn.AddEdge(hidden_candidate, zh);
-        gnn.AddEdge(update_gate, zh);
-
+        auto* zh = cl< CMulLayer >(gnn, {hidden_candidate, update_gate});
 
         // nn.AddConstant(1,false)(nn.MulConstant(-1,false)(update_gate))
-        auto* z_prev_h = new ConstTransLayer<mode, Dtype>(fmt::sprintf("z_prev_h_%d", time_step), GraphAtt::NODE, -1, 1);
-        gnn.AddEdge(update_gate, z_prev_h);
+        auto* z_prev_h = cl< ParamLayer >(gnn, {update_gate}, {param_dict["const_scalar"]});
 
         // (1 - update_gate) * prev_h
-        auto* zhm1 = new PairMulLayer<mode, Dtype>(fmt::sprintf("zhm1_%d", time_step), GraphAtt::NODE);
-        gnn.AddEdge(z_prev_h, zhm1);
-        gnn.AddEdge(last_hidden_layer, zhm1);
+        auto* zhm1 = cl< CMulLayer >(gnn, {z_prev_h, last_hidden_layer});
 
         // local next_h = nn.CAddTable()({zh, zhm1})
-        auto* next_h = new NodeGatherLayer<mode, Dtype>(fmt::sprintf("recurrent_hidden_%d", time_step));
-        gnn.AddEdge(zh, next_h);
-        gnn.AddEdge(zhm1, next_h);
-
+        auto* next_h = cl< CAddLayer >(fmt::sprintf("recurrent_hidden_%d", time_step), gnn, {zh, zhm1});
 
         return next_h;
     }
-*/
+
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict)
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict)
 	{
         auto* time_input_layer = cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), gnn, {});
         auto* event_input_layer = cl< InputLayer >(fmt::sprintf("event_input_%d", time_step), gnn, {});
@@ -194,7 +178,7 @@ public:
     	ILayer<mode, Dtype>* recurrent_output = nullptr;
         if (cfg::gru)
         {
-            //recurrent_output = AddGRULayer(time_step, gnn, last_hidden_layer, relu_embed_layer, time_input_layer, param_dict);
+            recurrent_output = AddGRULayer(time_step, gnn, last_hidden_layer, relu_embed_layer, time_input_layer, param_dict);
         } else
             recurrent_output = AddRNNLayer(time_step, gnn, last_hidden_layer, relu_embed_layer, time_input_layer, param_dict);
     	

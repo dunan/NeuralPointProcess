@@ -7,8 +7,8 @@ prefix_time=time-temporal-3
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=0
-gru=0
+hist=1
+gru=1
 n_embed=64
 H=128
 h2=0

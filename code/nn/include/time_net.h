@@ -100,7 +100,7 @@ public:
                                              NNGraph<mode, Dtype>& gnn,
                                              ILayer<mode, Dtype> *last_hidden_layer, 
                                              ILayer<mode, Dtype>* time_feat, 
-                                             std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict)
+                                             std::map< std::string, IParam<mode, Dtype>* >& param_dict)
     {
         auto* hidden_layer = AddRecur(fmt::sprintf("hidden_%d", time_step), 
                                       gnn, last_hidden_layer, time_feat,
@@ -169,7 +169,7 @@ public:
 	virtual ILayer<mode, Dtype>* AddNetBlocks(int time_step, 
 											  NNGraph<mode, Dtype>& gnn, 
 											  ILayer<mode, Dtype> *last_hidden_layer, 
-                                    		  std::map< std::string, IDiffParam<mode, Dtype>* >& param_dict) override
+                                    		  std::map< std::string, IParam<mode, Dtype>* >& param_dict) override
 	{		    
 		auto* time_input_layer = cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), gnn, {});
 
