@@ -19,6 +19,8 @@
 #include "config.h"
 #include "data_loader.h"
 #include "err_cnt_criterion_layer.h"
+#include "intensity_nll_criterion_layer.h"
+#include "dur_pred_layer.h"
 #include "learner.h"
 
 template<MatMode mode, typename Dtype>
@@ -63,8 +65,8 @@ public:
                                   g_event_label[0], 
                                   g_time_label[0]))
         {            
-            net_test.ForwardData(test_feat, TEST);
-            auto loss_map = net_test.ForwardLabel(test_label);
+            net_test.FeedForward(test_dict, TEST);
+            auto loss_map = net_test.GetLoss();
 
             for (auto it = loss_map.begin(); it != loss_map.end(); ++it)
             {
@@ -86,7 +88,7 @@ public:
         if (!initialized)
             Setup();
 
-		long long max_iter = (long long)cfg::max_epoch * train_data->num_samples / cfg::bptt / cfg::batch_size;
+		long long max_iter = (long long)cfg::max_epoch;
     	int init_iter = cfg::iter;
     
     	if (init_iter > 0)
@@ -131,8 +133,8 @@ public:
                         	          g_event_label, 
                             	      g_time_label);
         
-        	net_train.ForwardData(train_feat, TRAIN);
-        	auto loss_map = net_train.ForwardLabel(train_label);
+        	net_train.FeedForward(train_dict, TRAIN);
+        	auto loss_map = net_train.GetLoss();
             if (cfg::bptt > 1 && cfg::use_history)
             {
                 net_train.GetState(fmt::sprintf("recurrent_hidden_%d", cfg::bptt - 1), last_hidden_train);
@@ -153,7 +155,7 @@ public:
     MomentumSGDLearner<mode, Dtype>* learner;
 
 	std::vector< IMatrix<mode, Dtype>* > g_event_input, g_event_label, g_time_input, g_time_label;	
-	std::map<std::string, IMatrix<mode, Dtype>* > train_feat, train_label, test_feat, test_label;
+	std::map<std::string, IMatrix<mode, Dtype>* > train_dict, test_dict;
     IEventTimeLoader<mode>* etloader;
 
     bool initialized;

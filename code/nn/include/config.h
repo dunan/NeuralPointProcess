@@ -17,7 +17,8 @@ enum class NetType
 enum class LossType
 {
     MSE = 0,
-    EXP = 1
+    EXP = 1,
+    INTENSITY = 2
 };
 
 struct cfg
@@ -88,6 +89,8 @@ struct cfg
                     loss_type = LossType::MSE;
                 else if (strcmp(argv[i + 1], "exp") == 0)
                     loss_type = LossType::EXP;
+                else if (strcmp(argv[i + 1], "intensity") == 0)
+                    loss_type = LossType::INTENSITY;
                 else throw "unknown net type"; 
                 std::cerr << "loss_type = " << argv[i + 1] << std::endl;
             }
