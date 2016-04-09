@@ -17,8 +17,11 @@ public:
 			virtual void BackPropErr(std::vector< ILayer<mode, Dtype>* >& operands, unsigned cur_idx, Dtype beta) override {}
 
 protected:
+			void PT(Dtype t);
+
             LinearParam<mode, Dtype> *w;
             Dtype w_scalar;            
+            DenseMat<mode, Dtype> buffer, e_vt_hj;
 };
 
 #endif

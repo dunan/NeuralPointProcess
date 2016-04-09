@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=exp
+task=rayleigh
 prefix_event=event
 prefix_time=time
 

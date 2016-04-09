@@ -32,37 +32,30 @@ public:
 		Dtype rmse = 0.0, mae = 0.0, intnll = 0.0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
-            if (cfg::loss_type == LossType::MSE)
-            {
-                mae += loss_map[fmt::sprintf("mae_%d", i)];
-                rmse += loss_map[fmt::sprintf("mse_%d", i)];      
-            }          
+            mae += loss_map[fmt::sprintf("mae_%d", i)];
+            rmse += loss_map[fmt::sprintf("mse_%d", i)];
             if (cfg::loss_type == LossType::INTENSITY)
                 intnll +=  loss_map[fmt::sprintf("intnll_%d", i)]; 
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
         intnll /= cfg::bptt * cfg::batch_size;
-		std::cerr << fmt::sprintf("train iter=%d\t", cfg::iter);
-		if (cfg::loss_type == LossType::MSE)
-			std::cerr << fmt::sprintf("mae: %.4f\trmse: %.4f", mae, rmse);
+		std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f", cfg::iter, mae, rmse);
         if (cfg::loss_type == LossType::INTENSITY)
-            std::cerr << fmt::sprintf("intnll: %.4f", intnll);
+            std::cerr << fmt::sprintf("\tintnll: %.4f", intnll);
 		std::cerr << std::endl;
 	}
 
 	virtual void PrintTestResults(DataLoader<TEST>* dataset, std::map<std::string, Dtype>& loss_map) override
 	{			
-        if (cfg::loss_type == LossType::MSE)
-        {
-            Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
-            rmse = sqrt(rmse / dataset->num_samples);
-            mae /= dataset->num_samples;
-            std::cerr << fmt::sprintf("test_mae: %.6f\t test_rmse: %.6f", mae, rmse);    
-        }
+        Dtype rmse = loss_map["mse_0"], mae = loss_map["mae_0"];
+        rmse = sqrt(rmse / dataset->num_samples);
+        mae /= dataset->num_samples;
+        std::cerr << fmt::sprintf("test_mae: %.6f\t test_rmse: %.6f", mae, rmse);    
+
         if (cfg::loss_type == LossType::INTENSITY)
         {
-            std::cerr << fmt::sprintf("test_intnll: %.6f", loss_map["intnll_0"] / dataset->num_samples);       
+            std::cerr << fmt::sprintf("\ttest_intnll: %.6f", loss_map["intnll_0"] / dataset->num_samples);       
         }
 		
 		std::cerr << std::endl;
