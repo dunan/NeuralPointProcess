@@ -1,26 +1,26 @@
 #!/bin/bash
 
-task=rayleigh
-prefix_event=event
-prefix_time=time
+task=mixture-HMM
+prefix_event=event-temporal-3
+prefix_time=time-temporal-3
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=0
-gru=0
+hist=1
+gru=1
 n_embed=64
 H=128
 h2=0
-bsize=128
-bptt=3
+bsize=64
+bptt=5
 learning_rate=0.0001
-max_iter=100000
+max_iter=10000000
 cur_iter=0
-T=0
+T=24
 w_scale=0.01
 mode=CPU
-net=time
+net=joint
 time_scale=1
 lambda=1
 loss=intensity

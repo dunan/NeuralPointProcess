@@ -12,49 +12,45 @@ public:
 
 	virtual void LinkTrainData() override 
 	{
-    	this->train_feat["last_hidden"] = this->g_last_hidden_train;
+    	this->train_dict["last_hidden"] = this->g_last_hidden_train;
     	for (unsigned i = 0; i < cfg::bptt; ++i)
     	{        
-    		this->train_feat[fmt::sprintf("event_input_%d", i)] = this->g_event_input[i];
-        	this->train_label[fmt::sprintf("nll_%d", i)] = this->g_event_label[i];
-        	this->train_feat[fmt::sprintf("time_input_%d", i)] = this->g_time_input[i];
-        	this->train_label[fmt::sprintf("mse_%d", i)] = this->g_time_label[i];
-        	this->train_label[fmt::sprintf("mae_%d", i)] = this->g_time_label[i];
-            this->train_label[fmt::sprintf("err_cnt_%d", i)] = this->g_event_label[i];
-            if (cfg::loss_type == LossType::EXP)
-                this->train_label[fmt::sprintf("expnll_%d", i)] = this->g_time_label[i];
+    		this->train_dict[fmt::sprintf("event_input_%d", i)] = this->g_event_input[i];
+        	this->train_dict[fmt::sprintf("time_input_%d", i)] = this->g_time_input[i];
+            this->train_dict[fmt::sprintf("event_%d", i)] = this->g_event_label[i];
+            this->train_dict[fmt::sprintf("dur_%d", i)] = this->g_time_label[i];
     	}
 	}
 
 	virtual void LinkTestData() override
 	{
-		this->test_feat["last_hidden"] = this->g_last_hidden_test;
-		this->test_feat["event_input_0"] = this->g_event_input[0];
-		this->test_feat["time_input_0"] = this->g_time_input[0];
-		this->test_label["mse_0"] = this->g_time_label[0];
-		this->test_label["mae_0"] = this->g_time_label[0];
-		this->test_label["nll_0"] = this->g_event_label[0];
-        this->test_label["err_cnt_0"] = this->g_event_label[0];
-        if (cfg::loss_type == LossType::EXP)
-            this->test_label["expnll_0"] = this->g_time_label[0];
+		this->test_dict["last_hidden"] = this->g_last_hidden_test;
+		this->test_dict["event_input_0"] = this->g_event_input[0];
+		this->test_dict["time_input_0"] = this->g_time_input[0];
+		this->test_dict["dur_0"] = this->g_time_label[0];
+		this->test_dict["event_0"] = this->g_event_label[0];
 	}
 
 	virtual void PrintTrainBatchResults(std::map<std::string, Dtype>& loss_map) 
 	{
-		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0, expnll = 0;
+		Dtype rmse = 0.0, mae = 0.0, nll = 0.0, err_cnt = 0.0, intnll = 0.0;
 		for (unsigned i = 0; i < cfg::bptt; ++i)
         {
             mae += loss_map[fmt::sprintf("mae_%d", i)];
             rmse += loss_map[fmt::sprintf("mse_%d", i)];
         	nll += loss_map[fmt::sprintf("nll_%d", i)]; 
             err_cnt += loss_map[fmt::sprintf("err_cnt_%d", i)]; 
+            if (cfg::loss_type == LossType::INTENSITY)
+                intnll +=  loss_map[fmt::sprintf("intnll_%d", i)]; 
         }
         rmse = sqrt(rmse / cfg::bptt / cfg::batch_size);
 		mae /= cfg::bptt * cfg::batch_size;
 		nll /= cfg::bptt * train_data->batch_size;
         err_cnt /= cfg::bptt * train_data->batch_size;
-        expnll /= cfg::bptt * cfg::batch_size;
+        intnll /= cfg::bptt * cfg::batch_size;
         std::cerr << fmt::sprintf("train iter=%d\tmae: %.4f\trmse: %.4f\tnll: %.4f\terr_rate: %.4f", cfg::iter, mae, rmse, nll, err_cnt);
+        if (cfg::loss_type == LossType::INTENSITY)
+            std::cerr << fmt::sprintf("\tintnll: %.4f", intnll);
         std::cerr << std::endl;
 	}
 
@@ -66,6 +62,11 @@ public:
 		nll /= dataset->num_samples;
         Dtype err_cnt = loss_map["err_cnt_0"] / dataset->num_samples;
         std::cerr << fmt::sprintf("test_mae: %.6f\ttest_rmse: %.6f\ttest_nll: %.4f\ttest_err_rate: %.4f", mae, rmse, nll, err_cnt);
+
+        if (cfg::loss_type == LossType::INTENSITY)
+        {
+            std::cerr << fmt::sprintf("\ttest_intnll: %.6f", loss_map["intnll_0"] / dataset->num_samples);
+        }        
         std::cerr << std::endl;        
 	}
 
@@ -94,6 +95,8 @@ public:
         }
         add_diff< LinearParam >(this->model, "w_event_out", hidden_size, train_data->num_events, 0, cfg::w_scale);
     	add_diff< LinearParam >(this->model, "w_time_out", hidden_size, 1, 0, cfg::w_scale);
+        if (cfg::loss_type == LossType::INTENSITY)
+            add_diff< LinearParam >(this->model, "w_lambdat", 1, 1, 0, cfg::w_scale, BiasOption::NONE); 
 	}
 
     virtual ILayer<mode, Dtype>* AddRecur(std::string name, 
@@ -172,6 +175,9 @@ public:
         auto* time_input_layer = cl< InputLayer >(fmt::sprintf("time_input_%d", time_step), gnn, {});
         auto* event_input_layer = cl< InputLayer >(fmt::sprintf("event_input_%d", time_step), gnn, {});
 
+        auto* dur_label_layer = cl< InputLayer >(fmt::sprintf("dur_%d", time_step), gnn, {});
+        auto* event_label_layer = cl< InputLayer >(fmt::sprintf("event_%d", time_step), gnn, {});
+
     	auto* embed_layer = cl< ParamLayer >(gnn, {event_input_layer}, {param_dict["w_embed"]});
     	auto* relu_embed_layer = cl< ReLULayer >(gnn, {embed_layer});
 
@@ -194,16 +200,29 @@ public:
 
         auto* time_out_layer = cl< ParamLayer >(fmt::sprintf("time_out_%d", time_step), gnn, {top_hidden}, {param_dict["w_time_out"]});
 
-        cl< ClassNLLCriterionLayer >(fmt::sprintf("nll_%d", time_step), gnn, {event_output_layer}, true);
+        cl< ClassNLLCriterionLayer >(fmt::sprintf("nll_%d", time_step), gnn, {event_output_layer, event_label_layer}, true);
+        cl< ErrCntCriterionLayer >(fmt::sprintf("err_cnt_%d", time_step), gnn, {event_output_layer, event_label_layer});
 
-        cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), 
-                                gnn, {time_out_layer}, 
-                                cfg::lambda, 
-                                cfg::loss_type == LossType::MSE ? PropErr::T : PropErr::N);
-
-        cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer}, PropErr::N);
-
-        cl< ErrCntCriterionLayer >(fmt::sprintf("err_cnt_%d", time_step), gnn, {event_output_layer});
+        if (cfg::loss_type == LossType::MSE)
+        {
+            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {time_out_layer, dur_label_layer});
+            cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer, dur_label_layer}, PropErr::N);
+        }
+        if (cfg::loss_type == LossType::INTENSITY)
+        {   
+            LinearParam<mode, Dtype>* w = dynamic_cast<LinearParam<mode, Dtype>*>(param_dict["w_lambdat"]);
+            cl< IntensityNllCriterionLayer >(fmt::sprintf("intnll_%d", time_step), 
+                                             gnn, 
+                                             {time_out_layer, dur_label_layer}, 
+                                             w);
+            auto* dur_pred = cl< DurPredLayer >(fmt::sprintf("dur_pred_%d", time_step), 
+                                                gnn, 
+                                                {time_out_layer}, 
+                                                w);
+            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
+            cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
+        }
+        
 
 		return recurrent_output; 
 	}
