@@ -205,7 +205,7 @@ public:
 
         if (cfg::loss_type == LossType::MSE)
         {
-            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {time_out_layer, dur_label_layer});
+            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {time_out_layer, dur_label_layer}, cfg::lambda);
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {time_out_layer, dur_label_layer}, PropErr::N);
         }
         if (cfg::loss_type == LossType::INTENSITY)
@@ -214,7 +214,8 @@ public:
             cl< IntensityNllCriterionLayer >(fmt::sprintf("intnll_%d", time_step), 
                                              gnn, 
                                              {time_out_layer, dur_label_layer}, 
-                                             w);
+                                             w, 
+                                             cfg::lambda);
             auto* dur_pred = cl< DurPredLayer >(fmt::sprintf("dur_pred_%d", time_step), 
                                                 gnn, 
                                                 {time_out_layer}, 

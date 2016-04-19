@@ -7,22 +7,23 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=1
-gru=1
+hist=0
+gru=0
 n_embed=128
 H=128
 bsize=64
 bptt=3
 learning_rate=0.001
-max_iter=400
+max_iter=400000
 cur_iter=0
 T=0
 w_scale=0.01
-mode=GPU
+mode=CPU
 net=joint
 loss=mse
 time_scale=1
 lambda=27.088494573
+#lambda=1
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];
