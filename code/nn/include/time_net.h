@@ -205,15 +205,20 @@ public:
                                              gnn, 
                                              {time_out_layer, dur_label_layer}, 
                                              w);
-            auto* dur_pred = cl< DurPredLayer >(fmt::sprintf("dur_pred_%d", time_step), 
+            if (&gnn == &(this->net_test))
+            {
+                auto* dur_pred = cl< DurPredLayer >(fmt::sprintf("dur_pred_%d", time_step), 
                                                 gnn, 
                                                 {time_out_layer}, 
-                                                w);
+                                                w);    
+                cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
+                cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
+            }
+            
             auto* intensity_linear = cl< ParamLayer >(gnn, {top_hidden, dur_label_layer}, {param_dict["w_time_out"], param_dict["w_lambdat"]}, PropErr::N);
             cl< ExpLayer >(fmt::sprintf("intensity_%d", time_step), gnn, {intensity_linear});
 
-            cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
-            cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
+            
         }
     	
     	return recurrent_output; 
