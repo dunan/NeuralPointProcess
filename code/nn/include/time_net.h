@@ -216,13 +216,11 @@ public:
 	}
 
 	virtual void WriteTestBatch(FILE* fid) override
-	{
-        /*
-		this->net_test.GetDenseNodeState("time_out_0", buf);
-		buf2.CopyFrom(this->g_time_label[0]->node_states->DenseDerived());
+	{        
+		this->net_test.GetState("dur_pred_0", buf);
+		buf2.CopyFrom(this->g_time_label[0]->DenseDerived());
         for (size_t i = 0; i < buf.rows; ++i)
-            fprintf(fid, "%.6f %.6f\n",  buf.data[i], buf2.data[i]);
-            */
+            fprintf(fid, "%.6f %.6f\n",  buf.data[i], buf2.data[i]);            
 	}
 
 	DenseMat<CPU, Dtype> buf, buf2;
