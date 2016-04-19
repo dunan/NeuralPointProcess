@@ -2,6 +2,7 @@
 #define TIME_NET_H
 
 #include "inet.h"
+#include "exp_layer.h"
 
 template<MatMode mode, typename Dtype>
 class TimeNet : public INet<mode, Dtype>
@@ -208,6 +209,9 @@ public:
                                                 gnn, 
                                                 {time_out_layer}, 
                                                 w);
+            auto* intensity_linear = cl< ParamLayer >(gnn, {top_hidden, dur_label_layer}, {param_dict["w_time_out"], param_dict["w_lambdat"]}, PropErr::N);
+            cl< ExpLayer >(fmt::sprintf("intensity_%d", time_step), gnn, {intensity_linear});
+
             cl< MSECriterionLayer >(fmt::sprintf("mse_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
             cl< ABSCriterionLayer >(fmt::sprintf("mae_%d", time_step), gnn, {dur_pred, dur_label_layer}, PropErr::N);
         }
@@ -216,7 +220,12 @@ public:
 	}
 
 	virtual void WriteTestBatch(FILE* fid) override
-	{        
+	{   
+        this->net_test.GetState("intensity_0", buf);     
+        for (size_t i = 0; i < buf.rows; ++i)
+            fprintf(fid, "%.6f\n",  buf.data[i]);
+        return;
+
 		this->net_test.GetState("dur_pred_0", buf);
 		buf2.CopyFrom(this->g_time_label[0]->DenseDerived());
         for (size_t i = 0; i < buf.rows; ++i)
