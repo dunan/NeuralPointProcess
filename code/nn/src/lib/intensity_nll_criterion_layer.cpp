@@ -51,11 +51,15 @@ void IntensityNllCriterionLayer<mode, Dtype>::BackPropErr(std::vector< ILayer<mo
         auto& prev_grad = operands[0]->grad->DenseDerived();
         auto& grad = this->grad->DenseDerived();
         
+        auto batch_size = grad.rows;
         if (beta == 0)
+        {
             prev_grad.CopyFrom(grad);
+            prev_grad.Scale(this->lambda / batch_size);
+        }            
         else
-            prev_grad.Axpby(1.0, grad, beta);
-        prev_grad.Add(-1.0);           
+            prev_grad.Axpby(this->lambda / batch_size, grad, beta);
+        prev_grad.Add(-this->lambda / batch_size);
 }
 
 template<MatMode mode, typename Dtype>
@@ -73,7 +77,7 @@ void IntensityNllCriterionLayer<mode, Dtype>::AccDeriv(std::vector< ILayer<mode,
         dw -= grad.Sum() / w_scalar;
         cur_state.Exp();        
         dw += cur_state.Dot(delta_t) / w_scalar;
-        dw /= grad.rows;
+        dw *= this->lambda / grad.rows;
 
         this->w->p["weight"]->grad.Add(dw); 
 }

@@ -7,8 +7,8 @@ prefix_time=time
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=1
-gru=1
+hist=0
+gru=0
 n_embed=32
 H=32
 h2=16
@@ -20,9 +20,10 @@ cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
-net=time
-loss=mse
-lambda=1.32337245
+net=joint
+loss=intensity
+#lambda=1.32337245
+lambda=1
 time_scale=1
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
