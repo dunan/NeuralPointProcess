@@ -94,7 +94,7 @@ public:
     	if (init_iter > 0)
     	{
         	std::cerr << fmt::sprintf("loading model for iter=%d", init_iter) << std::endl;
-            //net_train.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
+            model.Load(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, init_iter));
     	}
         			
     	LinkTrainData();
@@ -122,7 +122,7 @@ public:
         	if (cfg::iter % cfg::save_interval == 0 && cfg::iter != init_iter)
         	{
             	std::cerr << fmt::sprintf("saving model for iter = %d", cfg::iter) << std::endl;
-                //net_train.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
+                model.Save(fmt::sprintf("%s/iter_%d.model", cfg::save_dir, cfg::iter));
         	}
         
         	train_data->NextBpttBatch(etloader, 
