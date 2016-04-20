@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=hawkes
+task=feeding
 prefix_event=event
 prefix_time=time
 
@@ -10,11 +10,11 @@ RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 hist=0
 gru=0
 n_embed=0
-H=256
+H=128
 h2=0
 bsize=64
-bptt=16
-learning_rate=0.0001
+bptt=4
+learning_rate=0.00001
 max_iter=10000000
 cur_iter=0
 T=0

@@ -36,9 +36,9 @@ void DurPredLayer<mode, Dtype>::UpdateOutput(std::vector< ILayer<mode, Dtype>* >
 
 		auto& int_result = this->state->DenseDerived();
 
-		int precision = 50000;
+		int precision = 1000;
 		int n = 2 * precision;
-		Dtype T = 1000;
+		Dtype T = 100;
 		Dtype delta = T / n;
 		// f(a) + f(b)
 		PT(T);
