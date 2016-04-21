@@ -51,7 +51,7 @@ void IntensityNllCriterionLayer<mode, Dtype>::BackPropErr(std::vector< ILayer<mo
         auto& prev_grad = operands[0]->grad->DenseDerived();
         auto& grad = this->grad->DenseDerived();
         
-        auto batch_size = grad.rows;
+        Dtype batch_size = grad.rows;
         if (beta == 0)
         {
             prev_grad.CopyFrom(grad);
