@@ -1,6 +1,6 @@
 #!/bin/bash
 
-task=feeding
+task=selfcorrecting
 prefix_event=event
 prefix_time=time
 
@@ -13,8 +13,8 @@ n_embed=0
 H=128
 h2=0
 bsize=64
-bptt=4
-learning_rate=0.00001
+bptt=8
+learning_rate=0.0005
 max_iter=10000000
 cur_iter=0
 T=0
