@@ -1,8 +1,8 @@
 #!/bin/bash
 
-task=selfcorrecting
-prefix_event=event
-prefix_time=time
+task=exp_temp
+prefix_event=event-2
+prefix_time=time-2
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -12,9 +12,9 @@ gru=0
 n_embed=0
 H=128
 h2=0
-bsize=64
-bptt=8
-learning_rate=0.0005
+bsize=128
+bptt=3
+learning_rate=0.01
 max_iter=10000000
 cur_iter=0
 T=0
