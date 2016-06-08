@@ -91,7 +91,7 @@ if __name__ == '__main__':
             test_event.append(event_lines[p[i + num_train_seqs]])
 
     print folder, e_file_name, t_file_name
-    save_sequence('%s/%s-train.txt' % (folder, t_file_name), train_time)
-    save_sequence('%s/%s-test.txt' % (folder, t_file_name), test_time)
-    save_sequence('%s/%s-train.txt' % (folder, e_file_name), train_event)
-    save_sequence('%s/%s-test.txt' % (folder, e_file_name), test_event)
+    save_sequence('%s/%s-test.txt' % (folder, t_file_name), train_time)
+    save_sequence('%s/%s-train.txt' % (folder, t_file_name), test_time)
+    save_sequence('%s/%s-test.txt' % (folder, e_file_name), train_event)
+    save_sequence('%s/%s-train.txt' % (folder, e_file_name), test_event)
