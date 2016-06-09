@@ -3,7 +3,7 @@
 data_root=../../../data
 subfolder=real
 
-task=book_order
+task=so
 
 for rr in 1 2 3 4 5;
 do
