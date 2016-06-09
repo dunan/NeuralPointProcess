@@ -10,7 +10,7 @@
 #include "data_adapter.h"
 #include "time_net.h"
 #include "joint_net.h"
-//#include "event_net.h"
+#include "event_net.h"
 
 const MatMode mode = CPU;
 
@@ -31,11 +31,9 @@ void Work()
         case NetType::JOINT:
             net = new JointNet<mode, Dtype>(etloader);
             break;
-            /*
         case NetType::EVENT:
             net = new EventNet<mode, Dtype>(etloader);
             break;
-            */
         default:
             std::cerr << "unsupported nettype" << std::endl;
             return;
