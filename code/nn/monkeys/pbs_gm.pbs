@@ -1,0 +1,20 @@
+#!/bin/bash
+#PBS -N npp
+#PBS -q monkeys
+#PBS -l walltime=12:00:00
+#PBS -l nodes=1:ppn=1
+#PBS -l mem=2gb
+#PBS -k oe
+#PBS -m ae
+
+cd $PBS_O_WORKDIR
+echo "
+==================================================
+Node: `hostname`
+Working directory: ${PWD}
+==================================================
+"
+
+cd /nv/hcoc1/hdai8/data/Research/NeuralPointProcess/code/nn/monkeys
+
+./${task}_server.sh $gru $n_embed $h $h2 $b $bptt

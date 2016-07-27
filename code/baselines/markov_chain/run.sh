@@ -3,15 +3,15 @@
 data_root=../../../data
 subfolder=real
 
-task=so
+task=taxi
 
 for rr in 1 2 3 4 5;
 do
 
     echo $rr
 
-event_prefix=event-$rr
-time_prefix=time-$rr
+event_prefix=pickup_events-$rr
+time_prefix=pickup_time-$rr
 
 for order in 1 2 3; do
 
