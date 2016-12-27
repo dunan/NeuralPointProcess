@@ -9,7 +9,7 @@
 #include "input_layer.h"
 #include "c_add_layer.h"
 #include "c_mul_layer.h"
-#include "cppformat/format.h"
+#include "fmt/format.h"
 #include "relu_layer.h"
 #include "model.h"
 #include "mse_criterion_layer.h"

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-task=yelp
-prefix_event=marker
+task=exp
+prefix_event=event
 prefix_time=time
 
-DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
+DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 hist=0
@@ -20,7 +20,7 @@ cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
-net=joint
+net=time
 time_scale=0.1
 lambda=1
 loss=intensity

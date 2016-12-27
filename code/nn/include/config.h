@@ -2,7 +2,7 @@
 #define cfg_H
 
 typedef double Dtype;
-#include "cppformat/format.h"
+#include "fmt/format.h"
 #include <set>
 #include "imatrix.h"
 #include <map>
