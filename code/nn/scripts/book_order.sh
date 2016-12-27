@@ -1,8 +1,8 @@
 #!/bin/bash
 
 task=book_order
-prefix_event=event
-prefix_time=time
+prefix_event=event-1
+prefix_time=time-1
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
@@ -19,11 +19,11 @@ cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
-net=joint
-loss=mse
+net=time
+loss=intensity
 time_scale=1
-lambda=27.088494573
-#lambda=1
+#lambda=27.088494573
+lambda=1
 save_dir=$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 
 if [ ! -e $save_dir ];

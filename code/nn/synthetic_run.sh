@@ -1,27 +1,27 @@
 #!/bin/bash
 
-task=debug
-prefix_event=event
+task=yelp
+prefix_event=marker
 prefix_time=time
 
-DATA_ROOT=$HOME/Research/NeuralPointProcess/data/synthetic/$task
+DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
 hist=0
 gru=0
-n_embed=0
+n_embed=128
 H=128
 h2=0
-bsize=1
-bptt=1
-learning_rate=0.0001
+bsize=64
+bptt=3
+learning_rate=0.01
 max_iter=10000000
 cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
-net=time
-time_scale=1
+net=joint
+time_scale=0.1
 lambda=1
 loss=intensity
 save_dir="$RESULT_ROOT/$net-$task-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize"
@@ -48,8 +48,6 @@ dev_id=0
     -svdir $save_dir \
     -hidden $H \
     -embed $n_embed \
-    -save_eval 1 \
-    -eval 1 \
     -T $T \
     -b $bsize \
     -w_scale $w_scale \

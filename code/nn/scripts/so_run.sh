@@ -1,31 +1,31 @@
 #!/bin/bash
 
 task=so
-prefix_event=event
-prefix_time=time
+prefix_event=event-1
+prefix_time=time-1
 
 DATA_ROOT=$HOME/Research/NeuralPointProcess/data/real/$task
 RESULT_ROOT=$HOME/scratch/results/NeuralPointProcess
 
-hist=0
-gru=0
+hist=1
+gru=1
 n_embed=128
 H=128
 h2=0
 bsize=64
 bptt=6
-learning_rate=0.0001
+learning_rate=0.01
 max_iter=40000000
 cur_iter=0
 T=0
 w_scale=0.01
 mode=CPU
 net=joint
-loss=intensity
+loss=mse
 test_top=-1
 time_scale=0.00001
-#lambda=0.009175195
-lambda=1
+lambda=0.009175195
+#lambda=1
 unix_str=wHMmd
 save_dir=$RESULT_ROOT/$net-$task-gru-$gru-hist-$hist-hidden-$H-embed-$n_embed-bptt-$bptt-bsize-$bsize
 

@@ -164,7 +164,6 @@ public:
     {
         if (!this->initialized)
             this->StartNewEpoch();
-        
         unsigned delta_size = 0;                    
         for (unsigned i = 0; i < cur_batch_size; ++i)
         {
@@ -230,18 +229,19 @@ public:
     }
 
     virtual void StartNewEpoch() override
-    {        
-        IDataLoader::StartNewEpoch();
+    {                
+        IDataLoader::StartNewEpoch();        
         if (available.size() != event_sequences.size())
             available.resize(event_sequences.size());
         
         for (unsigned i = 0; i < available.size(); ++i)
             available[i] = true;
-               
+        assert(available.size() >= this->batch_size);
+        
         for (unsigned i = 0; i < this->batch_size; ++i)
             available[cursors[i].first] = false;
 
-        cur_batch_size = batch_size;
+        cur_batch_size = batch_size;        
     }
     
 protected:    

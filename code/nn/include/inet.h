@@ -64,7 +64,7 @@ public:
                                   g_time_input[0], 
                                   g_event_label[0], 
                                   g_time_label[0]))
-        {            
+        {                        
             net_test.FeedForward(test_dict, TEST);
             auto loss_map = net_test.GetLoss();
 
