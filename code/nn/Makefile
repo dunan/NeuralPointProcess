@@ -27,6 +27,6 @@ build/lib/%.o: src/lib/%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $(filter %.cpp, $^)
 
 clean:
-	rm build/*
+	rm -rf build
 
 -include $(DEPS)
